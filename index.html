@@ -1,96 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Banana Stock Tycoon 🍌</title>
+  <meta charset="UTF-8" />
+  <title>🍌 Banana Stock Tracker</title>
   <style>
     body {
       font-family: 'Comic Sans MS', cursive;
-      background: #fefae0;
+      background: #fff8dc;
       text-align: center;
-      padding: 20px;
+      padding: 40px;
       color: #333;
     }
-    h1 { font-size: 40px; }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
+    h1 {
+      font-size: 42px;
+      margin-bottom: 20px;
     }
-    .buy { background: #a3d977; }
-    .sell { background: #f28c8c; }
-    .upgrade { background: #ffd93d; }
     #price {
-      font-size: 32px;
-      margin: 20px 0;
+      font-size: 30px;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 10px;
+      display: inline-block;
+      background: #e0ffe0;
     }
   </style>
 </head>
 <body>
-  <h1>🍌 Banana Stock Tycoon</h1>
-  <div id="price">Price: $5.00</div>
-  <button class="buy" onclick="buyBanana()">Buy 🍌</button>
-  <button class="sell" onclick="sellBanana()">Sell 🍌</button>
-  <button class="upgrade" onclick="upgrade()">Upgrade 🔧 ($500)</button>
+  <h1>📈 Banana Stock Tracker</h1>
+  <div id="price">Loading stock price...</div>
 
-  <h3>📊 Your Info</h3>
-  <p>Cash: $<span id="cash">1000</span></p>
-  <p>Bananas: <span id="bananas">0</span></p>
-  <p>Profit: $<span id="profit">0</span></p>
-  <p>Level: <span id="level">1</span></p>
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <script>
-    let cash = 1000;
-    let bananas = 0;
-    let profit = 0;
-    let price = 5;
-    let level = 1;
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      authDomain: "websites-be0b4.firebaseapp.com",
+      projectId: "websites-be0b4",
+      storageBucket: "websites-be0b4",
+      messagingSenderId: "1027369012808",
+      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d",
+      measurementId: "G-DEYQT2QTP3"
+    };
 
-    function updateUI() {
-      document.getElementById('cash').textContent = cash.toFixed(2);
-      document.getElementById('bananas').textContent = bananas;
-      document.getElementById('profit').textContent = profit.toFixed(2);
-      document.getElementById('level').textContent = level;
-      document.getElementById('price').textContent = `Price: $${price.toFixed(2)}`;
-    }
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    function buyBanana() {
-      if (cash >= price) {
-        bananas++;
-        cash -= price;
-        updateUI();
+    const stockRef = doc(db, "stockMarket", "bananaCorp");
+
+    // Create initial data if it doesn't exist
+    async function createInitialStock() {
+      const snap = await getDoc(stockRef);
+      if (!snap.exists()) {
+        await setDoc(stockRef, {
+          price: 5,
+          lastUpdated: Date.now(),
+          event: "📈 Market Opened"
+        });
       }
     }
 
-    function sellBanana() {
-      if (bananas > 0) {
-        bananas--;
-        cash += price;
-        profit += price - 5;
-        updateUI();
-      }
+    // Listen to live stock price
+    function listenToStock() {
+      onSnapshot(stockRef, (doc) => {
+        const data = doc.data();
+        document.getElementById("price").textContent = `💰 $${data.price.toFixed(2)} — ${data.event}`;
+      });
     }
 
-    function upgrade() {
-      if (cash >= 500) {
-        cash -= 500;
-        level++;
-        updateUI();
-      }
+    // Update stock price every 5 minutes
+    async function updateStockPriceEvery5Minutes() {
+      setInterval(async () => {
+        const snap = await getDoc(stockRef);
+        const current = snap.data();
+        const change = (Math.random() - 0.5) * 4; // -2 to +2
+        const newPrice = Math.max(1, current.price + change);
+        const events = [
+          "📉 Banana Oversupply!",
+          "📈 Banana Shortage!",
+          "📦 New Trade Deal!",
+          "🚀 Meme Boost!",
+          "💤 Slow Day"
+        ];
+        const randomEvent = events[Math.floor(Math.random() * events.length)];
+
+        await updateDoc(stockRef, {
+          price: newPrice,
+          lastUpdated: Date.now(),
+          event: randomEvent
+        });
+      }, 5 * 60 * 1000); // 5 minutes
     }
 
-    function randomizePrice() {
-      const change = (Math.random() - 0.5) * 4;
-      price += change + (level * 0.2);
-      if (price < 1) price = 1;
-      updateUI();
-    }
+    // Start everything
+    await createInitialStock();
+    listenToStock();
+    updateStockPriceEvery5Minutes();
 
-    setInterval(randomizePrice, 2000);
-    updateUI();
   </script>
 </body>
 </html>
