@@ -1,175 +1,94 @@
-<!-- Game HTML with multiple grow buttons for each seed type -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Grow a Garden</title>
+  <meta charset="UTF-8">
+  <title>Stonks Clicker</title>
   <style>
-  body { font-family: sans-serif; margin: 0; padding: 0; background: #f0fff0; }
-
-    #loadingScreen {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: #e0ffe0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 9999;
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 50px;
     }
-
-    #loadingTitle { font-size: 2em; margin-bottom: 20px; }
-
-    #loadingProgress {
-      font-size: 1.2em;
-      position: absolute;
-      bottom: 50px;
-      left: 20px;
-    }
-
-    #skipButton {
-      font-size: 0.9em;
-      padding: 6px 12px;
-      border: 2px solid #3a873a;
-      background-color: #d4f5d4;
-      color: #2f602f;
-      border-radius: 6px;
-      cursor: pointer;
-      position: absolute;
-      bottom: 90px;
-      left: 20px;
-    }
-
-    #skipButton:hover { background-color: #b9ebb9; }
-
-    #gameUI { text-align: center; padding: 30px; display: none; position: relative; }
-
-    #currencyDisplay {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-weight: bold;
-      font-size: 1.2em;
-      background: #c4f0c4;
-      padding: 8px 15px;
-      border-radius: 10px;
-      border: 2px solid #3a873a;
-      user-select: none;
-    }
-
-    #loginButton {
-      padding: 6px 12px;
-      font-size: 1em;
-      background: #ffffff;
-      border: 2px solid #3a873a;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
-
-    #shopToggle { margin-top: 20px; }
-    #shop { display: none; margin-top: 30px; }
-
-    .shop-item {
-      border: 2px solid #888;
-      padding: 15px;
+    button {
+      font-size: 20px;
       margin: 10px;
-      display: inline-block;
-      border-radius: 8px;
-      background: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: limegreen;
+      color: black;
+      cursor: pointer;
+    }
+    button.sell {
+      background: tomato;
+    }
+    #price {
+      font-size: 40px;
+      margin: 20px 0;
+    }
+    #status {
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <div id="currencyDisplay"></div>
-  <h1>🌱 Grow a Garden</h1>
-  <div id="growSection"></div>
-  <button id="shopToggle">🛒 Open Shop</button>
-  <div id="shop" style="display: none;"></div>
+  <h1>📈 Stonks Clicker</h1>
+  <div id="price">$0.00</div>
+  <button onclick="buyStock()">Buy</button>
+  <button class="sell" onclick="sellStock()">Sell</button>
 
-  <script type="module">
-    const seeds = [
-      { name: "Carrot Seed", price: 10, emoji: "🥕" },
-      { name: "Strawberry Seed", price: 50, emoji: "🍓" },
-      { name: "Blueberry Seed", price: 400, emoji: "🫐" },
-      { name: "Orange Tulip", price: 600, emoji: "🌷" }
-    ];
+  <div id="status">
+    💰 Cash: $<span id="cash">1000.00</span><br>
+    📦 Shares: <span id="shares">0</span><br>
+    🧠 Profit: $<span id="profit">0.00</span>
+  </div>
 
-    let currency = 10;
-    let inventory = {};
-    let grownItems = { "Carrot": 0, "Strawberry": 0, "Blueberry": 0, "Orange Tulip": 0 };
+  <script>
+    let price = 10;
+    let cash = 1000;
+    let shares = 0;
+    let profit = 0;
 
-    const currencyDisplay = document.getElementById("currencyDisplay");
-    const shopToggle = document.getElementById("shopToggle");
-    const shop = document.getElementById("shop");
-    const growSection = document.getElementById("growSection");
+    const priceEl = document.getElementById('price');
+    const cashEl = document.getElementById('cash');
+    const sharesEl = document.getElementById('shares');
+    const profitEl = document.getElementById('profit');
 
-    function updateCurrencyDisplay() {
-      currencyDisplay.textContent = `₵ ${currency}`;
+    function updateUI() {
+      priceEl.textContent = `$${price.toFixed(2)}`;
+      cashEl.textContent = cash.toFixed(2);
+      sharesEl.textContent = shares;
+      profitEl.textContent = profit.toFixed(2);
     }
 
-    function renderShop() {
-      shop.innerHTML = "";
-      seeds.forEach(seed => {
-        const owned = inventory[seed.name] || 0;
-        const div = document.createElement("div");
-        div.className = "shop-item";
-        div.innerHTML = `
-          <strong>${seed.emoji} ${seed.name}</strong><br>
-          Cost: ₵${seed.price}<br>
-          Owned: ${owned}<br>
-          <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
-        `;
-        shop.appendChild(div);
-      });
-    }
-
-    window.buySeed = function(name, price) {
-      if (currency >= price) {
-        currency -= price;
-        inventory[name] = (inventory[name] || 0) + 1;
-        updateCurrencyDisplay();
-        renderShop();
-        checkGrowable();
-      } else {
-        alert("Not enough ₵!");
+    function buyStock() {
+      if (cash >= price) {
+        cash -= price;
+        shares++;
+        updateUI();
       }
-    };
-
-    function checkGrowable() {
-      growSection.innerHTML = "";
-      seeds.forEach(seed => {
-        const seedName = seed.name;
-        const cropName = seedName.replace(" Seed", "");
-        if ((inventory[seedName] || 0) >= 1) {
-          const growDiv = document.createElement("div");
-          growDiv.className = "grow-item";
-          const buttonId = `grow${cropName}`;
-          growDiv.innerHTML = `
-            <button id="${buttonId}">Grow ${cropName} ${seed.emoji}</button>
-          `;
-          growSection.appendChild(growDiv);
-
-          document.getElementById(buttonId).addEventListener("click", () => {
-            const button = document.getElementById(buttonId);
-            button.disabled = true;
-            button.textContent = `🌿 Growing ${cropName}...`;
-            setTimeout(() => {
-              grownItems[cropName] = (grownItems[cropName] || 0) + 1;
-              currency += 1;
-              updateCurrencyDisplay();
-              button.disabled = false;
-              button.textContent = `Grow ${cropName} ${seed.emoji}`;
-            }, 5000);
-          });
-        }
-      });
     }
 
-    shopToggle.onclick = () => {
-      shop.style.display = shop.style.display === "none" ? "block" : "none";
-      renderShop();
-    };
+    function sellStock() {
+      if (shares > 0) {
+        cash += price;
+        profit += price - 10; // Bought at $10 originally
+        shares--;
+        updateUI();
+      }
+    }
 
-    updateCurrencyDisplay();
-    checkGrowable();
+    function updatePrice() {
+      const change = (Math.random() - 0.5) * 2; // -1 to +1
+      price += change;
+      if (price < 1) price = 1;
+      updateUI();
+    }
+
+    setInterval(updatePrice, 1000);
+    updateUI();
   </script>
 </body>
 </html>
