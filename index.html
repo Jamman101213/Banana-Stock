@@ -1,13 +1,81 @@
-<!-- Game HTML with Seed Requirements and Growth Buttons for All Fruits -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Grow a Garden</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #f0fff0; }
-    #currencyDisplay { position: absolute; top: 10px; right: 10px; font-size: 1.2em; background: #c4f0c4; padding: 6px 12px; border-radius: 8px; }
-    .shop-item { margin: 10px; padding: 10px; border: 1px solid #999; background: #fff; border-radius: 8px; }
-    .grow-button { margin: 5px; padding: 8px 12px; font-size: 1em; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #e6ffe6;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #2e8b57;
+    }
+    #currencyDisplay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #dfffdf;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    #shopToggle {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background-color: #8fbc8f;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #shop {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border: 2px solid #c0ffc0;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    .shop-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: #f8fff8;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .shop-item button {
+      margin-top: 5px;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: none;
+      background-color: #2e8b57;
+      color: white;
+      cursor: pointer;
+    }
+    #growSection {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .grow-button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #6b8e23;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    p {
+      color: #333;
+    }
   </style>
 </head>
 <body>
