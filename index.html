@@ -2,92 +2,131 @@
 <html>
 <head>
   <title>🍌 Banana Boomers</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; background: #fffde7; padding: 20px; }
-    .banana-card { border: 2px dashed #aaa; padding: 10px; margin: 15px; border-radius: 10px; background: #fefae0; display: inline-block; width: 200px; }
-    button { margin-top: 5px; padding: 5px 10px; }
-  </style>
-</head>
-<body>
-  <h1>🍌 Banana Boomers</h1>
-  <h3>Cash: $<span id="cash">100</span></h3>
+  <script type="module">
+    // --- Firebase Setup ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <div id="banana-shop"></div>
-
-  <script>
-    let cash = 100;
-
-    const bananaTypes = {
-      common:  { name: "Common Banana", color: "yellow", tree: "Basic Tree", basePrice: 5, growTime: 5000 },
-      big:     { name: "Big Banana",    color: "yellow", tree: "Thick Tree", basePrice: 8, growTime: 8000 },
-      rainbow: { name: "Rainbow Banana",color: "rainbow",tree: "Fancy Tree", basePrice: 15, growTime: 12000 },
-      rotten:  { name: "Rotten Banana", color: "brown",  tree: "Dead Tree",  basePrice: 1, growTime: 4000 },
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      authDomain: "websites-be0b4.firebaseapp.com",
+      projectId: "websites-be0b4",
+      storageBucket: "websites-be0b4.appspot.com",
+      messagingSenderId: "1027369012808",
+      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d"
     };
 
-    const inventory = [];
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    function updateCash() {
-      document.getElementById("cash").textContent = cash.toFixed(2);
-    }
+    // --- Game Data ---
+    const bananaTypes = {
+      common:  { name: "Common Banana Seed",   growTime: 5000,  basePrice: 5 },
+      big:     { name: "Big Banana Seed",      growTime: 8000,  basePrice: 8 },
+      rainbow: { name: "Rainbow Banana Seed",  growTime: 12000, basePrice: 15 }
+    };
 
-    function buyBanana(type) {
-      const banana = bananaTypes[type];
-      if (cash >= banana.basePrice) {
-        cash -= banana.basePrice;
-        const bananaObj = { ...banana, status: "Growing", type };
-        inventory.push(bananaObj);
-        updateCash();
-        renderShop();
+    let userDocRef, userData;
 
-        setTimeout(() => {
-          bananaObj.status = "Ready";
-          renderShop();
-        }, banana.growTime);
+    // --- Auth ---
+    document.getElementById('login').onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider);
+    };
+
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+
+        userDocRef = doc(db, "bananaUsers", user.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        if (docSnap.exists()) {
+          userData = docSnap.data();
+        } else {
+          userData = {
+            cash: 100,
+            inventory: {
+              common: 0,
+              big: 0,
+              rainbow: 0
+            }
+          };
+          await setDoc(userDocRef, userData);
+        }
+
+        render();
+      }
+    });
+
+    // --- Game Logic ---
+    async function buySeed(type) {
+      const cost = bananaTypes[type].basePrice;
+      if (userData.cash >= cost) {
+        userData.cash -= cost;
+        userData.inventory[type]++;
+        await updateDoc(userDocRef, {
+          cash: userData.cash,
+          inventory: userData.inventory
+        });
+        render();
       }
     }
 
-    function sellBanana(index) {
-      const banana = inventory[index];
-      if (banana.status === "Ready") {
-        let finalPrice = banana.basePrice + (Math.random() * 4 - 2); // Random ±$2
-        if (banana.type === "rotten") finalPrice = 0.5; // Decrease value for rotten
-        cash += finalPrice;
-        inventory.splice(index, 1);
-        updateCash();
-        renderShop();
+    async function sellBanana(type) {
+      if (userData.inventory[type] > 0) {
+        userData.inventory[type]--;
+        let sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 4 - 2);
+        if (sellPrice < 1) sellPrice = 1;
+        userData.cash += sellPrice;
+        await updateDoc(userDocRef, {
+          cash: userData.cash,
+          inventory: userData.inventory
+        });
+        render();
       }
     }
 
-    function renderShop() {
-      const shop = document.getElementById("banana-shop");
-      shop.innerHTML = '';
+    function render() {
+      document.getElementById('cash').textContent = userData.cash;
+      const area = document.getElementById('banana-area');
+      area.innerHTML = '';
 
-      for (const [type, data] of Object.entries(bananaTypes)) {
-        shop.innerHTML += `
-          <div class="banana-card" style="border-color: ${data.color};">
-            <h3>${data.name}</h3>
-            <p>Tree: ${data.tree}</p>
-            <p>Price: $${data.basePrice}</p>
-            <button onclick="buyBanana('${type}')">Plant</button>
+      for (const type in bananaTypes) {
+        const b = bananaTypes[type];
+        const count = userData.inventory[type];
+        area.innerHTML += `
+          <div style="border:1px solid #ccc; margin:10px; padding:10px; border-radius:10px;">
+            <h3>${b.name}</h3>
+            <p>Seeds Owned: ${count}</p>
+            <p>Buy for: $${b.basePrice}</p>
+            <button onclick="buySeed('${type}')">Buy Seed</button>
+            <button onclick="sellBanana('${type}')">Sell Banana</button>
           </div>
         `;
       }
-
-      shop.innerHTML += `<hr><h2>🌴 Your Bananas</h2>`;
-
-      inventory.forEach((banana, i) => {
-        shop.innerHTML += `
-          <div class="banana-card" style="background: ${banana.color === "rainbow" ? "linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)" : banana.color};">
-            <h3>${banana.name}</h3>
-            <p>Status: ${banana.status}</p>
-            ${banana.status === "Ready" ? `<button onclick="sellBanana(${i})">Sell</button>` : ""}
-          </div>
-        `;
-      });
     }
 
-    renderShop();
-    updateCash();
+    // --- Expose functions globally ---
+    window.buySeed = buySeed;
+    window.sellBanana = sellBanana;
   </script>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 20px;">
+  <h1>🍌 Banana Boomers</h1>
+
+  <div id="auth">
+    <button id="login">Sign In with Google</button>
+    <p id="user-info"></p>
+  </div>
+
+  <div id="game" style="display: none;">
+    <h3>Cash: $<span id="cash">0</span></h3>
+    <div id="banana-area"></div>
+  </div>
 </body>
 </html>
