@@ -67,6 +67,9 @@
 
     window.login = () => {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        client_id: "1027369012808-eode61mt3k853bfvuiv6u9ltv29l722r.apps.googleusercontent.com"
+      });
       signInWithPopup(auth, provider)
         .then((result) => {
           window.location.href = "/"; // Redirect back to main game
