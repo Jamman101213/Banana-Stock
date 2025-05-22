@@ -6,53 +6,22 @@
     body { font-family: sans-serif; margin: 0; padding: 0; background: #f0fff0; }
 
     #loadingScreen {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       background-color: #e0ffe0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 9999;
     }
 
-    #loadingTitle {
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
+    #loadingTitle { font-size: 2em; margin-bottom: 20px; }
+    #loadingProgress { font-size: 1.2em; position: absolute; bottom: 50px; left: 20px; }
+    #skipButton { position: absolute; top: 20px; right: 20px; padding: 10px 20px; font-size: 1em; cursor: pointer; }
 
-    #loadingProgress {
-      font-size: 1.2em;
-      position: absolute;
-      bottom: 50px;
-      left: 20px;
-    }
+    #gameUI { text-align: center; padding: 30px; display: none; }
+    button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
 
-    #skipButton {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    #gameUI {
-      text-align: center;
-      padding: 30px;
-      display: none;
-    }
-
-    button {
-      font-size: 1.2em;
-      padding: 10px 20px;
-      margin-top: 10px;
-    }
-
-    #shop {
-      margin-top: 40px;
-    }
+    #shopToggle { margin-top: 20px; }
+    #shop { display: none; margin-top: 30px; }
 
     .shop-item {
       border: 2px solid #888;
@@ -78,21 +47,11 @@
     <button id="growBtn" disabled>Grow Carrot 🥕</button>
     <p>You have <span id="carrotCount">0</span> carrots.</p>
 
-    <div id="shop">
-      <h2>🛒 Shop</h2>
-      <div class="shop-item">
-        <strong>Watering Can</strong><br>
-        Cost: 10 carrots<br>
-        You own: <span id="canCount">0</span><br>
-        <button onclick="buyItem('can')">Buy</button>
-      </div>
+    <button id="shopToggle">🛒 Open Shop</button>
 
-      <div class="shop-item">
-        <strong>Fertilizer</strong><br>
-        Cost: 25 carrots<br>
-        You own: <span id="fertilizerCount">0</span><br>
-        <button onclick="buyItem('fertilizer')">Buy</button>
-      </div>
+    <div id="shop">
+      <h2>🌱 Seed Shop</h2>
+      <div id="shopItems"></div>
     </div>
   </div>
 
@@ -122,19 +81,26 @@
     const loadingProgress = document.getElementById("loadingProgress");
     const skipButton = document.getElementById("skipButton");
     const gameUI = document.getElementById("gameUI");
-
-    const canCountDisplay = document.getElementById("canCount");
-    const fertilizerCountDisplay = document.getElementById("fertilizerCount");
+    const shopToggle = document.getElementById("shopToggle");
+    const shopDiv = document.getElementById("shop");
+    const shopItemsDiv = document.getElementById("shopItems");
 
     let userDocRef;
     let carrotCount = 0;
-    let canCount = 0;
-    let fertilizerCount = 0;
+    let seedInventory = {};
 
-    // Slower loading
+    // New seed data
+    const seeds = [
+      { name: "Carrot Seed", price: 10 },
+      { name: "Strawberry Seed", price: 50 },
+      { name: "Blueberry Seed", price: 400 },
+      { name: "Orange Tulip", price: 600 }
+    ];
+
+    // Loading screen
     let progress = 0;
     const maxProgress = 2500;
-    const step = 10; // slower step
+    const step = 10;
     const progressInterval = setInterval(() => {
       progress += step;
       if (progress >= maxProgress) {
@@ -143,7 +109,7 @@
         finishLoading();
       }
       loadingProgress.textContent = `${progress}/${maxProgress}`;
-    }, 30); // slower delay
+    }, 30);
 
     skipButton.addEventListener("click", () => {
       progress = maxProgress;
@@ -168,15 +134,15 @@
               if (docSnap.exists()) {
                 const data = docSnap.data();
                 carrotCount = data.carrots || 0;
-                canCount = data.can || 0;
-                fertilizerCount = data.fertilizer || 0;
+                seedInventory = data.seeds || {};
               } else {
-                await setDoc(userDocRef, { carrots: 0, can: 0, fertilizer: 0 });
+                await setDoc(userDocRef, { carrots: 0, seeds: {} });
               }
 
               updateUI();
               statusText.textContent = "You're in the garden!";
               growBtn.disabled = false;
+              renderShop();
             }
           });
         })
@@ -186,39 +152,53 @@
         });
     }
 
-    function updateUI() {
-      carrotDisplay.textContent = carrotCount;
-      canCountDisplay.textContent = canCount;
-      fertilizerCountDisplay.textContent = fertilizerCount;
-    }
-
     growBtn.addEventListener("click", async () => {
       carrotCount++;
       updateUI();
-      await setDoc(userDocRef, {
-        carrots: carrotCount,
-        can: canCount,
-        fertilizer: fertilizerCount
-      }, { merge: true });
+      await saveUserData();
     });
 
-    window.buyItem = async function (type) {
-      if (type === "can" && carrotCount >= 10) {
-        carrotCount -= 10;
-        canCount++;
-      } else if (type === "fertilizer" && carrotCount >= 25) {
-        carrotCount -= 25;
-        fertilizerCount++;
-      } else {
+    shopToggle.addEventListener("click", () => {
+      shopDiv.style.display = shopDiv.style.display === "none" ? "block" : "none";
+    });
+
+    function updateUI() {
+      carrotDisplay.textContent = carrotCount;
+    }
+
+    async function saveUserData() {
+      await setDoc(userDocRef, {
+        carrots: carrotCount,
+        seeds: seedInventory
+      }, { merge: true });
+    }
+
+    function renderShop() {
+      shopItemsDiv.innerHTML = "";
+      seeds.forEach(seed => {
+        const owned = seedInventory[seed.name] || 0;
+        const div = document.createElement("div");
+        div.className = "shop-item";
+        div.innerHTML = `
+          <strong>${seed.name}</strong><br>
+          Cost: ${seed.price} 🥕<br>
+          You own: ${owned}<br>
+          <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
+        `;
+        shopItemsDiv.appendChild(div);
+      });
+    }
+
+    window.buySeed = async function(name, price) {
+      if (carrotCount < price) {
         alert("Not enough carrots!");
         return;
       }
+      carrotCount -= price;
+      seedInventory[name] = (seedInventory[name] || 0) + 1;
       updateUI();
-      await setDoc(userDocRef, {
-        carrots: carrotCount,
-        can: canCount,
-        fertilizer: fertilizerCount
-      }, { merge: true });
+      renderShop();
+      await saveUserData();
     };
   </script>
 
