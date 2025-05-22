@@ -5,50 +5,93 @@
   <title>Banana Grower Game</title>
   <style>
     body {
-      background: #f5f5dc;
+      background: #fefae0;
       font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
       text-align: center;
+      margin: 0;
+      padding: 20px;
     }
+
+    h1 {
+      color: #665c00;
+    }
+
     #top-row {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
       margin-bottom: 20px;
     }
+
     .seed-card {
-      background: #fff8dc;
-      padding: 10px;
+      background: #fff9c4;
+      border: 2px solid #ffecb3;
       border-radius: 10px;
-      border: 2px solid #ccc;
+      padding: 15px;
+      width: 160px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .banana-tree {
-      margin: 10px;
-      padding: 10px;
-      background: #e6ffe6;
-      border: 2px solid #cfc;
-      border-radius: 10px;
+
+    .seed-card h3 {
+      margin: 5px 0;
+      color: #a18800;
     }
-    @keyframes popCoin {
-      0% { transform: scale(0) translateY(0); opacity: 1; }
-      50% { transform: scale(1.2) translateY(-20px); }
-      100% { transform: scale(0) translateY(-40px); opacity: 0; }
-    }
-    @keyframes flyToCash {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-100px) scale(0); opacity: 0; }
-    }
-    .coin {
-      display: inline-block;
-      color: gold;
-      font-size: 20px;
-      animation: popCoin 1s forwards;
+
+    .seed-card button {
       margin: 5px;
+      padding: 5px 10px;
+      border: none;
+      background: #ffd54f;
+      color: #5d4037;
+      border-radius: 5px;
+      cursor: pointer;
     }
+
+    .seed-card button:hover {
+      background: #ffe082;
+    }
+
+    .banana-tree {
+      margin: 10px auto;
+      padding: 15px;
+      background: #e0f7fa;
+      border: 2px solid #b2ebf2;
+      border-radius: 10px;
+      width: 300px;
+      position: relative;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .banana-tree button {
+      margin-top: 10px;
+      background: #b2dfdb;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .banana-tree button:hover {
+      background: #a5d6a7;
+    }
+
+    #cash {
+      font-weight: bold;
+      font-size: 1.5em;
+      color: green;
+    }
+
     .fly-banana {
-      display: inline-block;
+      position: absolute;
       font-size: 2em;
-      animation: flyToCash 1.2s forwards;
+      z-index: 10;
+      animation: flyToMoney 1s forwards;
+    }
+
+    @keyframes flyToMoney {
+      0% { transform: translate(0, 0); opacity: 1; }
+      100% { transform: translate(300px, -80px) scale(0.5); opacity: 0; }
     }
   </style>
 </head>
@@ -57,6 +100,7 @@
   <div id="auth">
     <button id="login">Sign in with Google</button>
   </div>
+
   <div id="game" style="display:none;">
     <h2 id="user-info"></h2>
     <h3>Money: $<span id="cash">0</span></h3>
@@ -83,9 +127,9 @@
     const db = getFirestore(app);
 
     const bananaTypes = {
-      common:  { name: "Common",   growTime: 5000,  basePrice: 5 },
-      big:     { name: "Big",      growTime: 8000,  basePrice: 8 },
-      rainbow: { name: "Rainbow",  growTime: 12000, basePrice: 15 }
+      common: { name: "Common", growTime: 4000, basePrice: 5 },
+      big: { name: "Big", growTime: 7000, basePrice: 8 },
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15 }
     };
 
     let userDocRef, userData;
@@ -137,29 +181,25 @@
 
     async function sellBananaWithAnimation(buttonEl, treeEl, type) {
       buttonEl.disabled = true;
-      buttonEl.style.display = "none";
 
-      const coin = document.createElement("div");
-      coin.className = "coin";
-      coin.textContent = "💰";
-      treeEl.appendChild(coin);
+      const bananaIcon = document.createElement("div");
+      bananaIcon.className = "fly-banana";
+      bananaIcon.textContent = "🍌";
+      treeEl.appendChild(bananaIcon);
 
-      const banana = document.createElement("div");
-      banana.className = "fly-banana";
-      banana.textContent = "🍌";
-      treeEl.appendChild(banana);
+      const cashCounter = document.getElementById("cash");
 
-      let sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 4 - 2);
-      if (sellPrice < 1) sellPrice = 1;
+      const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
+      userData.cash += sellPrice;
 
-      setTimeout(async () => {
+      await updateDoc(userDocRef, {
+        cash: userData.cash
+      });
+
+      setTimeout(() => {
         treeEl.remove();
-        userData.cash += sellPrice;
-        await updateDoc(userDocRef, {
-          cash: userData.cash
-        });
         render();
-      }, 1200);
+      }, 1000);
     }
 
     async function plantSeed(type) {
@@ -177,10 +217,10 @@
       document.getElementById("trees").appendChild(tree);
 
       setTimeout(() => {
+        tree.innerHTML = `🌳 ${bananaTypes[type].name} Banana Tree is ready! `;
         const btn = document.createElement("button");
         btn.textContent = `Sell ${bananaTypes[type].name} Banana`;
         btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
-        tree.innerHTML = `🌳 ${bananaTypes[type].name} Banana Tree is ready! `;
         tree.appendChild(btn);
       }, growTime);
     }
