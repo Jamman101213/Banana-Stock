@@ -50,7 +50,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
@@ -68,7 +68,7 @@
     window.login = () => {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
-        client_id: "1027369012808-eode61mt3k853bfvuiv6u9ltv29l722r.apps.googleusercontent.com"
+        client_id: "961111081065-vrfljle4vtd4ffg3jd8parg8mlech6f9.apps.googleusercontent.com"
       });
       signInWithPopup(auth, provider)
         .then((result) => {
@@ -79,6 +79,40 @@
           alert("Login failed: " + error.message);
         });
     }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const topBar = document.createElement("div");
+      topBar.style.position = "absolute";
+      topBar.style.top = "10px";
+      topBar.style.right = "10px";
+
+      const currencyDisplay = document.createElement("button");
+      currencyDisplay.style.background = "#3a873a";
+      currencyDisplay.style.color = "white";
+      currencyDisplay.style.border = "none";
+      currencyDisplay.style.padding = "10px 16px";
+      currencyDisplay.style.borderRadius = "8px";
+      currencyDisplay.style.cursor = "pointer";
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Logged in
+          currencyDisplay.textContent = "Sign out";
+          currencyDisplay.onclick = () => {
+            signOut(auth);
+          };
+        } else {
+          // Not logged in
+          currencyDisplay.textContent = "Login";
+          currencyDisplay.onclick = () => {
+            window.location.href = "/login";
+          };
+        }
+      });
+
+      topBar.appendChild(currencyDisplay);
+      document.body.appendChild(topBar);
+    });
   </script>
 </body>
 </html>
