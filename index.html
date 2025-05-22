@@ -111,7 +111,6 @@
     let carrotCount = 0;
     let seedInventory = {};
 
-    // Updated seed data with emoji
     const seeds = [
       { name: "Carrot Seed", price: 10, emoji: "🥕" },
       { name: "Strawberry Seed", price: 50, emoji: "🍓" },
@@ -164,7 +163,6 @@
               updateUI();
               statusText.textContent = "You're in the garden!";
               growBtn.disabled = false;
-              renderShop();
             }
           });
         })
@@ -181,7 +179,12 @@
     });
 
     shopToggle.addEventListener("click", () => {
-      shopDiv.style.display = shopDiv.style.display === "none" ? "block" : "none";
+      if (shopDiv.style.display === "none" || shopDiv.style.display === "") {
+        shopDiv.style.display = "block";
+        renderShop(); // refresh shop list every time it opens
+      } else {
+        shopDiv.style.display = "none";
+      }
     });
 
     function updateUI() {
