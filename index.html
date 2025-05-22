@@ -2,8 +2,78 @@
 <html>
 <head>
   <title>🍌 Banana Boomers</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: #fffbe6;
+      color: #333;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    #top-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .seed-card {
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      padding: 10px 15px;
+      width: 160px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+    }
+    .seed-card h3 {
+      margin: 5px 0;
+    }
+    .tree-grow {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: green;
+    }
+    .banana-tree {
+      margin: 10px auto;
+      font-size: 2em;
+    }
+    button {
+      background: #ffe135;
+      border: none;
+      padding: 8px 14px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #trees {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍌 Banana Boomers</h1>
+
+  <div id="auth">
+    <button id="login">Sign In with Google</button>
+    <p id="user-info"></p>
+  </div>
+
+  <div id="game" style="display: none;">
+    <h3>Cash: $<span id="cash">0</span></h3>
+
+    <!-- Seed Buy Row -->
+    <div id="top-row"></div>
+
+    <!-- Planted Trees -->
+    <div id="trees"></div>
+  </div>
+
   <script type="module">
-    // --- Firebase Setup ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -21,16 +91,14 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- Game Data ---
     const bananaTypes = {
-      common:  { name: "Common Banana Seed",   growTime: 5000,  basePrice: 5 },
-      big:     { name: "Big Banana Seed",      growTime: 8000,  basePrice: 8 },
-      rainbow: { name: "Rainbow Banana Seed",  growTime: 12000, basePrice: 15 }
+      common:  { name: "Common",   growTime: 5000,  basePrice: 5 },
+      big:     { name: "Big",      growTime: 8000,  basePrice: 8 },
+      rainbow: { name: "Rainbow",  growTime: 12000, basePrice: 15 }
     };
 
     let userDocRef, userData;
 
-    // --- Auth ---
     document.getElementById('login').onclick = () => {
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider);
@@ -63,7 +131,6 @@
       }
     });
 
-    // --- Game Logic ---
     async function buySeed(type) {
       const cost = bananaTypes[type].basePrice;
       if (userData.cash >= cost) {
@@ -78,55 +145,59 @@
     }
 
     async function sellBanana(type) {
-      if (userData.inventory[type] > 0) {
-        userData.inventory[type]--;
-        let sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 4 - 2);
-        if (sellPrice < 1) sellPrice = 1;
-        userData.cash += sellPrice;
-        await updateDoc(userDocRef, {
-          cash: userData.cash,
-          inventory: userData.inventory
-        });
-        render();
-      }
+      let sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 4 - 2);
+      if (sellPrice < 1) sellPrice = 1;
+      userData.cash += sellPrice;
+      await updateDoc(userDocRef, {
+        cash: userData.cash,
+        inventory: userData.inventory
+      });
+      render();
+    }
+
+    async function plantSeed(type) {
+      if (userData.inventory[type] <= 0) return;
+      userData.inventory[type]--;
+      await updateDoc(userDocRef, {
+        inventory: userData.inventory
+      });
+      render();
+
+      const growTime = bananaTypes[type].growTime;
+      const tree = document.createElement("div");
+      tree.className = "banana-tree";
+      tree.innerHTML = `🌱 Growing a ${bananaTypes[type].name} Banana Tree...`;
+      document.getElementById("trees").appendChild(tree);
+
+      setTimeout(async () => {
+        tree.innerHTML = `🌳 ${bananaTypes[type].name} Banana Tree is ready! <button onclick="sellBanana('${type}')">Sell Banana</button>`;
+      }, growTime);
     }
 
     function render() {
       document.getElementById('cash').textContent = userData.cash;
-      const area = document.getElementById('banana-area');
-      area.innerHTML = '';
+
+      const topRow = document.getElementById('top-row');
+      topRow.innerHTML = '';
 
       for (const type in bananaTypes) {
         const b = bananaTypes[type];
         const count = userData.inventory[type];
-        area.innerHTML += `
-          <div style="border:1px solid #ccc; margin:10px; padding:10px; border-radius:10px;">
+        topRow.innerHTML += `
+          <div class="seed-card">
             <h3>${b.name}</h3>
-            <p>Seeds Owned: ${count}</p>
-            <p>Buy for: $${b.basePrice}</p>
-            <button onclick="buySeed('${type}')">Buy Seed</button>
-            <button onclick="sellBanana('${type}')">Sell Banana</button>
+            <p>Seeds: ${count}</p>
+            <p>Buy: $${b.basePrice}</p>
+            <button onclick="buySeed('${type}')">Buy</button>
+            <button onclick="plantSeed('${type}')">Plant</button>
           </div>
         `;
       }
     }
 
-    // --- Expose functions globally ---
     window.buySeed = buySeed;
+    window.plantSeed = plantSeed;
     window.sellBanana = sellBanana;
   </script>
-</head>
-<body style="font-family: sans-serif; text-align: center; padding: 20px;">
-  <h1>🍌 Banana Boomers</h1>
-
-  <div id="auth">
-    <button id="login">Sign In with Google</button>
-    <p id="user-info"></p>
-  </div>
-
-  <div id="game" style="display: none;">
-    <h3>Cash: $<span id="cash">0</span></h3>
-    <div id="banana-area"></div>
-  </div>
 </body>
 </html>
