@@ -1,101 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Grow a Garden</title>
+  <title>Grow a Garden Login</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #f0fff0; }
-
-    #loadingScreen {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: #e0ffe0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 9999;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0fff0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
 
-    #loadingTitle { font-size: 2em; margin-bottom: 20px; }
-
-    #loadingProgress {
-      font-size: 1.2em;
-      position: absolute;
-      bottom: 50px;
-      left: 20px;
-    }
-
-    #skipButton {
-      font-size: 0.9em;
-      padding: 6px 12px;
+    .login-box {
+      background: #ffffff;
       border: 2px solid #3a873a;
-      background-color: #d4f5d4;
-      color: #2f602f;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: absolute;
-      bottom: 90px;
-      left: 20px;
-    }
-    #skipButton:hover {
-      background-color: #b9ebb9;
-    }
-
-    #gameUI { text-align: center; padding: 30px; display: none; position: relative; }
-
-    #currencyDisplay {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-weight: bold;
-      font-size: 1.2em;
-      background: #c4f0c4;
-      padding: 8px 15px;
       border-radius: 10px;
-      border: 2px solid #3a873a;
-      user-select: none;
+      padding: 30px 40px;
+      text-align: center;
     }
 
-    button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+    h2 {
+      margin-bottom: 20px;
+      color: #2f602f;
+    }
 
-    #shopToggle { margin-top: 20px; }
-    #shop { display: none; margin-top: 30px; }
-
-    .shop-item {
-      border: 2px solid #888;
-      padding: 15px;
-      margin: 10px;
-      display: inline-block;
+    button {
+      background-color: #3a873a;
+      color: white;
+      padding: 12px 20px;
+      font-size: 1em;
+      border: none;
       border-radius: 8px;
-      background: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2f602f;
     }
   </style>
 </head>
 <body>
-
-  <div id="loadingScreen">
-    <div id="loadingTitle">🌱 Grow A Garden Web</div>
-    <button id="skipButton">Skip</button>
-    <div id="loadingProgress">0/2500</div>
-  </div>
-
-  <div id="gameUI">
-    <div id="currencyDisplay">₵ 10</div>
-    <h1>🌱 Grow a Garden</h1>
-    <p id="status">Signing in...</p>
-    <button id="growBtn" disabled>Grow Carrot 🥕</button>
-    <p>You have <span id="carrotCount">10</span> carrots.</p>
-
-    <button id="shopToggle">🛒 Open Shop</button>
-
-    <div id="shop">
-      <h2>🌱 Seed Shop</h2>
-      <div id="shopItems"></div>
-    </div>
+  <div class="login-box">
+    <h2>Login to Grow a Garden</h2>
+    <button onclick="login()">Sign in with Google</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
@@ -109,140 +64,55 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
 
-    const growBtn = document.getElementById("growBtn");
-    const carrotDisplay = document.getElementById("carrotCount");
-    const currencyDisplay = document.getElementById("currencyDisplay");
-    const statusText = document.getElementById("status");
-    const loadingScreen = document.getElementById("loadingScreen");
-    const loadingProgress = document.getElementById("loadingProgress");
-    const skipButton = document.getElementById("skipButton");
-    const gameUI = document.getElementById("gameUI");
-    const shopToggle = document.getElementById("shopToggle");
-    const shopDiv = document.getElementById("shop");
-    const shopItemsDiv = document.getElementById("shopItems");
-
-    let userDocRef;
-    let carrotCount = 10; // Start with 10 carrots
-    let seedInventory = {};
-
-    const seeds = [
-      { name: "Carrot Seed", price: 10, emoji: "🥕" },
-      { name: "Strawberry Seed", price: 50, emoji: "🍓" },
-      { name: "Blueberry Seed", price: 400, emoji: "🫐" },
-      { name: "Orange Tulip", price: 600, emoji: "🌷" }
-    ];
-
-    // Loading screen logic
-    let progress = 0;
-    const maxProgress = 2500;
-    const step = 10;
-    const progressInterval = setInterval(() => {
-      progress += step;
-      if (progress >= maxProgress) {
-        progress = maxProgress;
-        clearInterval(progressInterval);
-        finishLoading();
-      }
-      loadingProgress.textContent = `${progress}/${maxProgress}`;
-    }, 30);
-
-    skipButton.addEventListener("click", () => {
-      progress = maxProgress;
-      finishLoading();
-    });
-
-    function finishLoading() {
-      clearInterval(progressInterval);
-      loadingScreen.style.display = "none";
-      gameUI.style.display = "block";
-      startGame();
-    }
-
-    function startGame() {
-      signInAnonymously(auth)
-        .then(() => {
-          onAuthStateChanged(auth, async (user) => {
-            if (user) {
-              const uid = user.uid;
-              userDocRef = doc(db, "users", uid);
-              const docSnap = await getDoc(userDocRef);
-              if (docSnap.exists()) {
-                const data = docSnap.data();
-                carrotCount = data.carrots !== undefined ? data.carrots : 10;
-                seedInventory = data.seeds || {};
-              } else {
-                await setDoc(userDocRef, { carrots: carrotCount, seeds: {} });
-              }
-
-              updateUI();
-              statusText.textContent = "You're in the garden!";
-              growBtn.disabled = false;
-            }
-          });
+    window.login = () => {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        client_id: "961111081065-vrfljle4vtd4ffg3jd8parg8mlech6f9.apps.googleusercontent.com"
+      });
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          window.location.href = "/"; // Redirect back to main game
         })
         .catch((error) => {
-          console.error("Auth error:", error);
-          statusText.textContent = "Error signing in.";
+          console.error("Login failed", error);
+          alert("Login failed: " + error.message);
         });
     }
 
-    growBtn.addEventListener("click", async () => {
-      carrotCount++;
-      updateUI();
-      await saveUserData();
-    });
+    window.addEventListener("DOMContentLoaded", () => {
+      const topBar = document.createElement("div");
+      topBar.style.position = "absolute";
+      topBar.style.top = "10px";
+      topBar.style.right = "10px";
 
-    shopToggle.addEventListener("click", () => {
-      if (shopDiv.style.display === "none" || shopDiv.style.display === "") {
-        shopDiv.style.display = "block";
-        renderShop(); // refresh shop list every time it opens
-      } else {
-        shopDiv.style.display = "none";
-      }
-    });
+      const currencyDisplay = document.createElement("button");
+      currencyDisplay.style.background = "#3a873a";
+      currencyDisplay.style.color = "white";
+      currencyDisplay.style.border = "none";
+      currencyDisplay.style.padding = "10px 16px";
+      currencyDisplay.style.borderRadius = "8px";
+      currencyDisplay.style.cursor = "pointer";
 
-    function updateUI() {
-      carrotDisplay.textContent = carrotCount;
-      currencyDisplay.textContent = `₵ ${carrotCount}`;
-    }
-
-    async function saveUserData() {
-      await setDoc(userDocRef, {
-        carrots: carrotCount,
-        seeds: seedInventory
-      }, { merge: true });
-    }
-
-    function renderShop() {
-      shopItemsDiv.innerHTML = "";
-      seeds.forEach(seed => {
-        const owned = seedInventory[seed.name] || 0;
-        const div = document.createElement("div");
-        div.className = "shop-item";
-        div.innerHTML = `
-          <strong>${seed.emoji} ${seed.name}</strong><br>
-          Cost: ${seed.price} ₵<br>
-          You own: ${owned}<br>
-          <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
-        `;
-        shopItemsDiv.appendChild(div);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Logged in
+          currencyDisplay.textContent = "Sign out";
+          currencyDisplay.onclick = () => {
+            signOut(auth);
+          };
+        } else {
+          // Not logged in
+          currencyDisplay.textContent = "Login";
+          currencyDisplay.onclick = () => {
+            window.location.href = "/login";
+          };
+        }
       });
-    }
 
-    window.buySeed = async function(name, price) {
-      if (carrotCount < price) {
-        alert("Not enough ₵!");
-        return;
-      }
-      carrotCount -= price;
-      seedInventory[name] = (seedInventory[name] || 0) + 1;
-      updateUI();
-      renderShop();
-      await saveUserData();
-    };
+      topBar.appendChild(currencyDisplay);
+      document.body.appendChild(topBar);
+    });
   </script>
-
 </body>
 </html>
