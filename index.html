@@ -1,142 +1,23 @@
-<!-- Save as index.html -->
+<!-- Game HTML with Seed Requirements and Growth Buttons for All Fruits -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Grow a Garden</title>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 0; background: #f0fff0; }
-
-    #loadingScreen {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: #e0ffe0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 9999;
-    }
-
-    #loadingTitle { font-size: 2em; margin-bottom: 20px; }
-
-    #loadingProgress {
-      font-size: 1.2em;
-      position: absolute;
-      bottom: 50px;
-      left: 20px;
-    }
-
-    #skipButton {
-      font-size: 0.9em;
-      padding: 6px 12px;
-      border: 2px solid #3a873a;
-      background-color: #d4f5d4;
-      color: #2f602f;
-      border-radius: 6px;
-      cursor: pointer;
-      position: absolute;
-      bottom: 90px;
-      left: 20px;
-    }
-
-    #skipButton:hover { background-color: #b9ebb9; }
-
-    #gameUI { text-align: center; padding: 30px; display: none; position: relative; }
-
-    #currencyDisplay {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-weight: bold;
-      font-size: 1.2em;
-      background: #c4f0c4;
-      padding: 8px 15px;
-      border-radius: 10px;
-      border: 2px solid #3a873a;
-      user-select: none;
-    }
-
-    #loginButton {
-      padding: 6px 12px;
-      font-size: 1em;
-      background: #ffffff;
-      border: 2px solid #3a873a;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
-
-    #shopToggle { margin-top: 20px; }
-    #shop { display: none; margin-top: 30px; }
-
-    .shop-item {
-      border: 2px solid #888;
-      padding: 15px;
-      margin: 10px;
-      display: inline-block;
-      border-radius: 8px;
-      background: #fff;
-    }
+    #currencyDisplay { position: absolute; top: 10px; right: 10px; font-size: 1.2em; background: #c4f0c4; padding: 6px 12px; border-radius: 8px; }
+    .shop-item { margin: 10px; padding: 10px; border: 1px solid #999; background: #fff; border-radius: 8px; }
+    .grow-button { margin: 5px; padding: 8px 12px; font-size: 1em; }
   </style>
 </head>
 <body>
-
-  <div id="loadingScreen">
-    <div id="loadingTitle">🌱 Grow A Garden Web</div>
-    <button id="skipButton">Skip</button>
-    <div id="loadingProgress">0/2500</div>
-  </div>
-
-  <div id="gameUI">
-    <div id="currencyDisplay"><button id="loginButton">Login</button></div>
-    <h1>🌱 Grow a Garden</h1>
-    <p id="status">Signing in...</p>
-    <button id="growBtn" disabled>Grow Carrot 🥕</button>
-    <p>You have <span id="carrotCount">10</span> carrots.</p>
-
-    <button id="shopToggle">🛒 Open Shop</button>
-
-    <div id="shop">
-      <h2>🌱 Seed Shop</h2>
-      <div id="shopItems"></div>
-    </div>
-  </div>
+  <div id="currencyDisplay"></div>
+  <h1>🌱 Grow a Garden</h1>
+  <div id="growSection"></div>
+  <button id="shopToggle">🛒 Open Shop</button>
+  <div id="shop" style="display: none;"></div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
-      authDomain: "websites-be0b4.firebaseapp.com",
-      projectId: "websites-be0b4",
-      storageBucket: "websites-be0b4.appspot.com",
-      messagingSenderId: "1027369012808",
-      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d",
-      measurementId: "G-DEYQT2QTP3"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const growBtn = document.getElementById("growBtn");
-    const carrotDisplay = document.getElementById("carrotCount");
-    const currencyDisplay = document.getElementById("currencyDisplay");
-    const statusText = document.getElementById("status");
-    const loadingScreen = document.getElementById("loadingScreen");
-    const loadingProgress = document.getElementById("loadingProgress");
-    const skipButton = document.getElementById("skipButton");
-    const gameUI = document.getElementById("gameUI");
-    const shopToggle = document.getElementById("shopToggle");
-    const shopDiv = document.getElementById("shop");
-    const shopItemsDiv = document.getElementById("shopItems");
-    const loginButton = document.getElementById("loginButton");
-
-    let userDocRef;
-    let carrotCount = 10;
-    let seedInventory = {};
-    let userLoggedIn = false;
-
     const seeds = [
       { name: "Carrot Seed", price: 10, emoji: "🥕" },
       { name: "Strawberry Seed", price: 50, emoji: "🍓" },
@@ -144,115 +25,83 @@
       { name: "Orange Tulip", price: 600, emoji: "🌷" }
     ];
 
-    loginButton.addEventListener("click", () => {
-      window.location.href = "/login";
-    });
+    let currency = 10;
+    let inventory = {};
+    let crops = { "Carrot": 0, "Strawberry": 0, "Blueberry": 0, "Orange Tulip": 0 };
+    const currencyDisplay = document.getElementById("currencyDisplay");
+    const shopToggle = document.getElementById("shopToggle");
+    const shop = document.getElementById("shop");
+    const growSection = document.getElementById("growSection");
 
-    let progress = 0;
-    const maxProgress = 2500;
-    const step = 10;
-    const progressInterval = setInterval(() => {
-      progress += step;
-      if (progress >= maxProgress) {
-        progress = maxProgress;
-        clearInterval(progressInterval);
-        finishLoading();
-      }
-      loadingProgress.textContent = `${progress}/${maxProgress}`;
-    }, 30);
-
-    skipButton.addEventListener("click", () => {
-      progress = maxProgress;
-      finishLoading();
-    });
-
-    function finishLoading() {
-      loadingScreen.style.display = "none";
-      gameUI.style.display = "block";
-      startGame();
-    }
-
-    function startGame() {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          userLoggedIn = true;
-          loginButton.style.display = "none";
-          const uid = user.uid;
-          userDocRef = doc(db, "users", uid);
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            carrotCount = data.carrots ?? 10;
-            seedInventory = data.seeds || {};
-          } else {
-            await setDoc(userDocRef, { carrots: carrotCount, seeds: {} });
-          }
-
-          updateUI();
-          growBtn.disabled = false;
-          statusText.textContent = "You're in the garden!";
-        } else {
-          growBtn.disabled = true;
-          currencyDisplay.innerHTML = `<button id="loginButton">Login</button>`;
-        }
-      });
-    }
-
-    growBtn.addEventListener("click", async () => {
-      carrotCount++;
-      updateUI();
-      await saveUserData();
-    });
-
-    shopToggle.addEventListener("click", () => {
-      if (shopDiv.style.display === "none") {
-        shopDiv.style.display = "block";
-        renderShop();
-      } else {
-        shopDiv.style.display = "none";
-      }
-    });
-
-    function updateUI() {
-      carrotDisplay.textContent = carrotCount;
-      currencyDisplay.innerHTML = `₵ ${carrotCount}`;
-    }
-
-    async function saveUserData() {
-      if (!userDocRef) return;
-      await setDoc(userDocRef, {
-        carrots: carrotCount,
-        seeds: seedInventory
-      }, { merge: true });
+    function updateCurrencyDisplay() {
+      currencyDisplay.textContent = `₵ ${currency}`;
     }
 
     function renderShop() {
-      shopItemsDiv.innerHTML = "";
+      shop.innerHTML = "";
       seeds.forEach(seed => {
-        const owned = seedInventory[seed.name] || 0;
+        const owned = inventory[seed.name] || 0;
         const div = document.createElement("div");
         div.className = "shop-item";
         div.innerHTML = `
           <strong>${seed.emoji} ${seed.name}</strong><br>
-          Cost: ${seed.price} ₵<br>
-          You own: ${owned}<br>
+          Cost: ₵${seed.price}<br>
+          Owned: ${owned}<br>
           <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
         `;
-        shopItemsDiv.appendChild(div);
+        shop.appendChild(div);
       });
     }
 
-    window.buySeed = async function(name, price) {
-      if (carrotCount < price) {
+    window.buySeed = function(name, price) {
+      if (currency >= price) {
+        currency -= price;
+        inventory[name] = (inventory[name] || 0) + 1;
+        updateCurrencyDisplay();
+        renderShop();
+        checkGrowable();
+      } else {
         alert("Not enough ₵!");
-        return;
       }
-      carrotCount -= price;
-      seedInventory[name] = (seedInventory[name] || 0) + 1;
-      updateUI();
-      renderShop();
-      await saveUserData();
     };
+
+    function checkGrowable() {
+      growSection.innerHTML = "";
+      seeds.forEach(seed => {
+        const seedName = seed.name;
+        const cropName = seedName.replace(" Seed", "");
+        if ((inventory[seedName] || 0) >= 1) {
+          const button = document.createElement("button");
+          button.className = "grow-button";
+          button.textContent = `Grow ${cropName} ${seed.emoji}`;
+          button.onclick = () => {
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = `🌿 Growing ${cropName}...`;
+            setTimeout(() => {
+              crops[cropName]++;
+              currency++;
+              updateCurrencyDisplay();
+              button.disabled = false;
+              button.textContent = originalText;
+            }, 5000);
+          };
+          growSection.appendChild(button);
+        } else {
+          const info = document.createElement("p");
+          info.textContent = `Buy a ${seedName} to grow ${cropName}.`;
+          growSection.appendChild(info);
+        }
+      });
+    }
+
+    shopToggle.onclick = () => {
+      shop.style.display = shop.style.display === "none" ? "block" : "none";
+      renderShop();
+    };
+
+    updateCurrencyDisplay();
+    checkGrowable();
   </script>
 </body>
 </html>
