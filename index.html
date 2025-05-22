@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grow a Garden</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: #e0ffe0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #loadingTitle {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    #loadingProgress {
+      font-size: 1.2em;
+      position: absolute;
+      bottom: 50px;
+      left: 20px;
+    }
+
+    #skipButton {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    #gameUI {
+      text-align: center;
+      margin-top: 50px;
+      display: none;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen">
+    <div id="loadingTitle">🌱 Grow A Garden Web</div>
+    <button id="skipButton">Skip</button>
+    <div id="loadingProgress">0/2500</div>
+  </div>
+
+  <div id="gameUI">
+    <h1>🌱 Grow a Garden</h1>
+    <p id="status">Signing in...</p>
+    <button id="growBtn" disabled>Grow Carrot 🥕</button>
+    <p>You have <span id="carrotCount">0</span> carrots.</p>
+  </div>
+
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      authDomain: "websites-be0b4.firebaseapp.com",
+      projectId: "websites-be0b4",
+      storageBucket: "websites-be0b4.firebasestorage.app",
+      messagingSenderId: "1027369012808",
+      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d",
+      measurementId: "G-DEYQT2QTP3"
+    };
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI Elements
+    const growBtn = document.getElementById("growBtn");
+    const carrotDisplay = document.getElementById("carrotCount");
+    const statusText = document.getElementById("status");
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loadingProgress = document.getElementById("loadingProgress");
+    const skipButton = document.getElementById("skipButton");
+    const gameUI = document.getElementById("gameUI");
+
+    let userDocRef;
+    let carrotCount = 0;
+
+    // Fake loading bar
+    let progress = 0;
+    const maxProgress = 2500;
+    const step = 25;
+
+    const progressInterval = setInterval(() => {
+      progress += step;
+      if (progress >= maxProgress) {
+        progress = maxProgress;
+        clearInterval(progressInterval);
+        finishLoading();
+      }
+      loadingProgress.textContent = `${progress}/${maxProgress}`;
+    }, 20);
+
+    skipButton.addEventListener("click", () => {
+      progress = maxProgress;
+      finishLoading();
+    });
+
+    function finishLoading() {
+      clearInterval(progressInterval);
+      loadingScreen.style.display = "none";
+      gameUI.style.display = "block";
+      startGame();
+    }
+
+    function startGame() {
+      signInAnonymously(auth)
+        .then(() => {
+          onAuthStateChanged(auth, async (user) => {
+            if (user) {
+              const uid = user.uid;
+              userDocRef = doc(db, "users", uid);
+
+              const docSnap = await getDoc(userDocRef);
+              if (docSnap.exists()) {
+                carrotCount = docSnap.data().carrots || 0;
+              } else {
+                await setDoc(userDocRef, { carrots: 0 });
+              }
+
+              carrotDisplay.textContent = carrotCount;
+              statusText.textContent = "You're in the garden!";
+              growBtn.disabled = false;
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("Auth error:", error);
+          statusText.textContent = "Error signing in.";
+        });
+    }
+
+    growBtn.addEventListener("click", async () => {
+      carrotCount++;
+      carrotDisplay.textContent = carrotCount;
+      await setDoc(userDocRef, { carrots: carrotCount }, { merge: true });
+    });
+  </script>
+
+</body>
+</html>
