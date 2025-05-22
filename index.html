@@ -2,92 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Stonks Clicker</title>
+  <title>Banana Stock Tycoon 🍌</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
+      font-family: 'Comic Sans MS', cursive;
+      background: #fefae0;
       text-align: center;
-      padding: 50px;
+      padding: 20px;
+      color: #333;
     }
+    h1 { font-size: 40px; }
     button {
-      font-size: 20px;
-      margin: 10px;
       padding: 10px 20px;
+      margin: 10px;
+      font-size: 18px;
       border: none;
       border-radius: 10px;
-      background: limegreen;
-      color: black;
       cursor: pointer;
     }
-    button.sell {
-      background: tomato;
-    }
+    .buy { background: #a3d977; }
+    .sell { background: #f28c8c; }
+    .upgrade { background: #ffd93d; }
     #price {
-      font-size: 40px;
+      font-size: 32px;
       margin: 20px 0;
-    }
-    #status {
-      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>📈 Stonks Clicker</h1>
-  <div id="price">$0.00</div>
-  <button onclick="buyStock()">Buy</button>
-  <button class="sell" onclick="sellStock()">Sell</button>
+  <h1>🍌 Banana Stock Tycoon</h1>
+  <div id="price">Price: $5.00</div>
+  <button class="buy" onclick="buyBanana()">Buy 🍌</button>
+  <button class="sell" onclick="sellBanana()">Sell 🍌</button>
+  <button class="upgrade" onclick="upgrade()">Upgrade 🔧 ($500)</button>
 
-  <div id="status">
-    💰 Cash: $<span id="cash">1000.00</span><br>
-    📦 Shares: <span id="shares">0</span><br>
-    🧠 Profit: $<span id="profit">0.00</span>
-  </div>
+  <h3>📊 Your Info</h3>
+  <p>Cash: $<span id="cash">1000</span></p>
+  <p>Bananas: <span id="bananas">0</span></p>
+  <p>Profit: $<span id="profit">0</span></p>
+  <p>Level: <span id="level">1</span></p>
 
   <script>
-    let price = 10;
     let cash = 1000;
-    let shares = 0;
+    let bananas = 0;
     let profit = 0;
-
-    const priceEl = document.getElementById('price');
-    const cashEl = document.getElementById('cash');
-    const sharesEl = document.getElementById('shares');
-    const profitEl = document.getElementById('profit');
+    let price = 5;
+    let level = 1;
 
     function updateUI() {
-      priceEl.textContent = `$${price.toFixed(2)}`;
-      cashEl.textContent = cash.toFixed(2);
-      sharesEl.textContent = shares;
-      profitEl.textContent = profit.toFixed(2);
+      document.getElementById('cash').textContent = cash.toFixed(2);
+      document.getElementById('bananas').textContent = bananas;
+      document.getElementById('profit').textContent = profit.toFixed(2);
+      document.getElementById('level').textContent = level;
+      document.getElementById('price').textContent = `Price: $${price.toFixed(2)}`;
     }
 
-    function buyStock() {
+    function buyBanana() {
       if (cash >= price) {
+        bananas++;
         cash -= price;
-        shares++;
         updateUI();
       }
     }
 
-    function sellStock() {
-      if (shares > 0) {
+    function sellBanana() {
+      if (bananas > 0) {
+        bananas--;
         cash += price;
-        profit += price - 10; // Bought at $10 originally
-        shares--;
+        profit += price - 5;
         updateUI();
       }
     }
 
-    function updatePrice() {
-      const change = (Math.random() - 0.5) * 2; // -1 to +1
-      price += change;
+    function upgrade() {
+      if (cash >= 500) {
+        cash -= 500;
+        level++;
+        updateUI();
+      }
+    }
+
+    function randomizePrice() {
+      const change = (Math.random() - 0.5) * 4;
+      price += change + (level * 0.2);
       if (price < 1) price = 1;
       updateUI();
     }
 
-    setInterval(updatePrice, 1000);
+    setInterval(randomizePrice, 2000);
     updateUI();
   </script>
 </body>
