@@ -39,7 +39,21 @@
       background-color: #b9ebb9;
     }
 
-    #gameUI { text-align: center; padding: 30px; display: none; }
+    #gameUI { text-align: center; padding: 30px; display: none; position: relative; }
+
+    #currencyDisplay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-weight: bold;
+      font-size: 1.2em;
+      background: #c4f0c4;
+      padding: 8px 15px;
+      border-radius: 10px;
+      border: 2px solid #3a873a;
+      user-select: none;
+    }
+
     button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
 
     #shopToggle { margin-top: 20px; }
@@ -64,10 +78,11 @@
   </div>
 
   <div id="gameUI">
+    <div id="currencyDisplay">₵ 10</div>
     <h1>🌱 Grow a Garden</h1>
     <p id="status">Signing in...</p>
     <button id="growBtn" disabled>Grow Carrot 🥕</button>
-    <p>You have <span id="carrotCount">0</span> carrots.</p>
+    <p>You have <span id="carrotCount">10</span> carrots.</p>
 
     <button id="shopToggle">🛒 Open Shop</button>
 
@@ -98,6 +113,7 @@
 
     const growBtn = document.getElementById("growBtn");
     const carrotDisplay = document.getElementById("carrotCount");
+    const currencyDisplay = document.getElementById("currencyDisplay");
     const statusText = document.getElementById("status");
     const loadingScreen = document.getElementById("loadingScreen");
     const loadingProgress = document.getElementById("loadingProgress");
@@ -108,7 +124,7 @@
     const shopItemsDiv = document.getElementById("shopItems");
 
     let userDocRef;
-    let carrotCount = 0;
+    let carrotCount = 10; // Start with 10 carrots
     let seedInventory = {};
 
     const seeds = [
@@ -154,10 +170,10 @@
               const docSnap = await getDoc(userDocRef);
               if (docSnap.exists()) {
                 const data = docSnap.data();
-                carrotCount = data.carrots || 0;
+                carrotCount = data.carrots !== undefined ? data.carrots : 10;
                 seedInventory = data.seeds || {};
               } else {
-                await setDoc(userDocRef, { carrots: 0, seeds: {} });
+                await setDoc(userDocRef, { carrots: carrotCount, seeds: {} });
               }
 
               updateUI();
@@ -189,6 +205,7 @@
 
     function updateUI() {
       carrotDisplay.textContent = carrotCount;
+      currencyDisplay.textContent = `₵ ${carrotCount}`;
     }
 
     async function saveUserData() {
@@ -206,7 +223,7 @@
         div.className = "shop-item";
         div.innerHTML = `
           <strong>${seed.emoji} ${seed.name}</strong><br>
-          Cost: ${seed.price} 🥕<br>
+          Cost: ${seed.price} ₵<br>
           You own: ${owned}<br>
           <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
         `;
@@ -216,7 +233,7 @@
 
     window.buySeed = async function(name, price) {
       if (carrotCount < price) {
-        alert("Not enough carrots!");
+        alert("Not enough ₵!");
         return;
       }
       carrotCount -= price;
