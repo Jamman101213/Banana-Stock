@@ -14,8 +14,30 @@
     }
 
     #loadingTitle { font-size: 2em; margin-bottom: 20px; }
-    #loadingProgress { font-size: 1.2em; position: absolute; bottom: 50px; left: 20px; }
-    #skipButton { position: absolute; top: 20px; right: 20px; padding: 10px 20px; font-size: 1em; cursor: pointer; }
+
+    #loadingProgress {
+      font-size: 1.2em;
+      position: absolute;
+      bottom: 50px;
+      left: 20px;
+    }
+
+    #skipButton {
+      font-size: 0.9em;
+      padding: 6px 12px;
+      border: 2px solid #3a873a;
+      background-color: #d4f5d4;
+      color: #2f602f;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: absolute;
+      bottom: 90px;
+      left: 20px;
+    }
+    #skipButton:hover {
+      background-color: #b9ebb9;
+    }
 
     #gameUI { text-align: center; padding: 30px; display: none; }
     button { font-size: 1.2em; padding: 10px 20px; margin-top: 10px; cursor: pointer; }
@@ -89,15 +111,15 @@
     let carrotCount = 0;
     let seedInventory = {};
 
-    // New seed data
+    // Updated seed data with emoji
     const seeds = [
-      { name: "Carrot Seed", price: 10 },
-      { name: "Strawberry Seed", price: 50 },
-      { name: "Blueberry Seed", price: 400 },
-      { name: "Orange Tulip", price: 600 }
+      { name: "Carrot Seed", price: 10, emoji: "🥕" },
+      { name: "Strawberry Seed", price: 50, emoji: "🍓" },
+      { name: "Blueberry Seed", price: 400, emoji: "🫐" },
+      { name: "Orange Tulip", price: 600, emoji: "🌷" }
     ];
 
-    // Loading screen
+    // Loading screen logic
     let progress = 0;
     const maxProgress = 2500;
     const step = 10;
@@ -180,7 +202,7 @@
         const div = document.createElement("div");
         div.className = "shop-item";
         div.innerHTML = `
-          <strong>${seed.name}</strong><br>
+          <strong>${seed.emoji} ${seed.name}</strong><br>
           Cost: ${seed.price} 🥕<br>
           You own: ${owned}<br>
           <button onclick="buySeed('${seed.name}', ${seed.price})">Buy</button>
