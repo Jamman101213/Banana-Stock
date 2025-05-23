@@ -354,7 +354,7 @@
     onAuthStateChanged(auth, async user => {
       if (!user) {
         // Redirect to login if not authenticated
-        window.location.href = 'index.html';
+        window.location.href = 'log-in';
         return;
       }
 
@@ -369,7 +369,7 @@
         }
       });
 
-      document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+      document.getElementById('user-info').textContent = `Welcome, ${user.displayName ?? 'user'}`;
       render();
 
       // Hide loading screen after 1 second
