@@ -120,42 +120,41 @@
   </div>
 
   <div id="game" style="display: block;">
-    <h2 id="user-info">Welcome, Jameson Manning</h2>
-    <h3>Money: $<span id="cash">41</span></h3>
-    <button id="restock-btn">🔁 Restock Banana Seeds</button>
+    <h2 id="user-info">Welcome,</h2>
+    <h3>Money: $<span id="cash">Loading...</span></h3>
     <div id="top-row">
           <div class="seed-card">
-            <h3>Normal</h3>
-            <p>Seeds: 1</p>
-            <p>Stock: 7</p>
-            <p>Buy: $5</p>
+            <h3>Normal:</h3>
+            <p>Seeds:</p>
+            <p>Stock:</p>
+            <p>Buy:</p>
             <button onclick="buySeed('normal')">Buy</button>
             <button onclick="plantSeed('normal')">Plant</button>
           </div>
         
           <div class="seed-card">
             <h3>Big</h3>
-            <p>Seeds: 0</p>
-            <p>Stock: 6</p>
-            <p>Buy: $10</p>
+            <p>Seeds:</p>
+            <p>Stock:</p>
+            <p>Buy:</p>
             <button onclick="buySeed('big')">Buy</button>
             <button onclick="plantSeed('big')">Plant</button>
           </div>
         
           <div class="seed-card">
             <h3>Rainbow</h3>
-            <p>Seeds: 0</p>
-            <p>Stock: 3</p>
-            <p>Buy: $25</p>
+            <p>Seeds:</p>
+            <p>Stock:</p>
+            <p>Buy:</p>
             <button onclick="buySeed('rainbow')">Buy</button>
             <button onclick="plantSeed('rainbow')">Plant</button>
           </div>
         
           <div class="seed-card">
             <h3>Mythical</h3>
-            <p>Seeds: 0</p>
-            <p>Stock: 0</p>
-            <p>Buy: $50</p>
+            <p>Seeds:</p>
+            <p>Stock:</p>
+            <p>Buy:</p>
             <button onclick="buySeed('mythical')">Buy</button>
             <button onclick="plantSeed('mythical')">Plant</button>
           </div>
@@ -231,25 +230,6 @@
         render();
       }
     });
-
-    document.getElementById('restock-btn').onclick = async () => {
-      const newStock = {};
-      for (const type in bananaTypes) {
-        let chance = Math.random();
-        let maxStock = 0;
-
-        if (type === "normal") maxStock = 20;
-        else if (type === "big") maxStock = 10;
-        else if (type === "rainbow") maxStock = 5;
-        else if (type === "mythical") maxStock = 2;
-
-        newStock[type] = chance > 0.5 ? Math.floor(Math.random() * (maxStock + 1)) : 0;
-      }
-
-      await setDoc(stockDocRef, newStock);
-      globalStock = newStock;
-      render();
-    };
 
     async function buySeed(type) {
       const cost = bananaTypes[type].basePrice;
