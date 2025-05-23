@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banana Grower - Login</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6213603518465024"
+       crossorigin="anonymous"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #fefae0 0%, #fff9c4 100%);
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      border: 3px solid #ffecb3;
+    }
+
+    .welcome-header {
+      color: #665c00;
+      font-size: 3em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .game-title {
+      color: #a18800;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .description {
+      color: #665c00;
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .features {
+      background: #fff9c4;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .features h3 {
+      color: #a18800;
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .features ul {
+      color: #665c00;
+      list-style: none;
+      padding: 0;
+    }
+
+    .features li {
+      margin: 10px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .features li:before {
+      content: "🍌";
+      position: absolute;
+      left: 0;
+    }
+
+    #login-btn {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffe082 100%);
+      color: #5d4037;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.3em;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+      border: 2px solid #ffecb3;
+    }
+
+    #login-btn:hover {
+      background: linear-gradient(135deg, #ffe082 0%, #fff176 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 213, 79, 0.6);
+    }
+
+    .loading {
+      display: none;
+      color: #a18800;
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #ffd54f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .floating-banana {
+      position: absolute;
+      font-size: 2em;
+      animation: float 3s ease-in-out infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .banana-1 { top: 10%; left: 10%; animation-delay: 0s; }
+    .banana-2 { top: 20%; right: 15%; animation-delay: 1s; }
+    .banana-3 { bottom: 30%; left: 5%; animation-delay: 2s; }
+    .banana-4 { bottom: 10%; right: 10%; animation-delay: 0.5s; }
+  </style>
+</head>
+<body>
+  <!-- Floating bananas for decoration -->
+  <div class="floating-banana banana-1">🍌</div>
+  <div class="floating-banana banana-2">🍌</div>
+  <div class="floating-banana banana-3">🍌</div>
+  <div class="floating-banana banana-4">🍌</div>
+
+  <div class="login-container">
+    <div class="welcome-header">🍌</div>
+    <h1 class="game-title">Banana Grower</h1>
+    
+    <p class="description">
+      Welcome to the ultimate banana growing experience! Plant, grow, and harvest your way to banana fortune!
+    </p>
+
+    <div class="features">
+      <h3>Game Features</h3>
+      <ul>
+        <li>Grow different types of bananas</li>
+        <li>Build your banana empire</li>
+        <li>Real-time global stock market</li>
+        <li>Save your progress in the cloud</li>
+      </ul>
+    </div>
+
+    <button id="login-btn">🔑 Sign in with Google</button>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      Signing you in...
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      authDomain: "websites-be0b4.firebaseapp.com",
+      projectId: "websites-be0b4",
+      storageBucket: "websites-be0b4.appspot.com",
+      messagingSenderId: "1027369012808",
+      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const loginBtn = document.getElementById('login-btn');
+    const loading = document.getElementById('loading');
+
+    loginBtn.onclick = async () => {
+      try {
+        loginBtn.style.display = 'none';
+        loading.style.display = 'block';
+        
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+        loginBtn.style.display = 'block';
+        loading.style.display = 'none';
+      }
+    };
+
+    // Check if user is already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Redirect to game page
+        window.location.href = 'game.html';
+      }
+    });
+  </script>
+</body>
+</html>
