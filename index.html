@@ -119,6 +119,20 @@
       pointer-events: none;
       user-select: none;
     }
+
+    #delete-data {
+      background: #ff5252;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #delete-data:hover {
+      background: #ff3030;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +147,8 @@
 
   <div id="game" style="display: none;">
     <h2 id="user-info">Welcome, UNDEFINED</h2>
+    <!-- Delete Data Button -->
+    <button id="delete-data" style="display:none;">Delete My Data</button>
     <h3>Money: <span id="cash">UNDEFINED</span></h3>
     <div id="top-row"></div>
     <div id="trees"></div>
@@ -141,7 +157,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
@@ -219,9 +235,25 @@
       document.getElementById('auth').style.display = 'none';
       document.getElementById('game').style.display = 'block';
 
+      // Show delete button now that user is logged in
+      const deleteBtn = document.getElementById('delete-data');
+      deleteBtn.style.display = 'inline-block';
+
+      deleteBtn.onclick = async () => {
+        if (confirm("Are you sure you want to delete your data? This cannot be undone.")) {
+          try {
+            await deleteDoc(userDocRef);
+            alert("Your data was deleted. The page will reload.");
+            location.reload();
+          } catch (e) {
+            alert("Error deleting data: " + e.message);
+          }
+        }
+      };
+
       render();
 
-      // Hide loading screen after 3 seconds
+      // Hide loading screen after 1 second
       setTimeout(() => {
         showLoadingScreen(false);
       }, 1000);
@@ -299,55 +331,63 @@
       render();
 
       const growthStages = bananaTypes[type].growthStages;
-      const totalGrowTime = bananaTypes[type].growTime;
-      const stageTime = totalGrowTime / growthStages.length;
+      const growTime = bananaTypes[type].growTime;
 
-      const tree = document.createElement("div");
-      tree.className = "banana-tree";
-      tree.textContent = growthStages[0];
-      document.getElementById("trees").appendChild(tree);
+      const treeEl = document.createElement("div");
+      treeEl.className = "banana-tree";
+      treeEl.textContent = growthStages[0];
+      document.getElementById("trees").appendChild(treeEl);
 
-      let currentStage = 0;
+      let stage = 0;
+
       const growInterval = setInterval(() => {
-        currentStage++;
-        if (currentStage < growthStages.length) {
-          tree.textContent = growthStages[currentStage];
-        } else {
+        stage++;
+        if (stage >= growthStages.length) {
           clearInterval(growInterval);
-          tree.textContent = `${growthStages[growthStages.length - 1]} ${bananaTypes[type].name} Banana Tree is ready!`;
-          const btn = document.createElement("button");
-          btn.textContent = `Sell ${bananaTypes[type].name} Bananas`;
-          btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
-          tree.appendChild(btn);
+          treeEl.textContent = "🍌 Ready!";
+
+          const sellBtn = document.createElement("button");
+          sellBtn.textContent = "Sell";
+          treeEl.appendChild(sellBtn);
+
+          sellBtn.onclick = async () => {
+            await sellBananaWithAnimation(sellBtn, treeEl, type);
+          };
+          return;
         }
-      }, stageTime);
+        treeEl.textContent = growthStages[stage];
+      }, growTime / growthStages.length);
     }
 
     function render() {
-      document.getElementById('cash').textContent = userData.cash;
-      const topRow = document.getElementById('top-row');
-      topRow.innerHTML = '';
+      document.getElementById("cash").textContent = userData.cash.toFixed(0);
+
+      // Show seed cards
+      const topRow = document.getElementById("top-row");
+      topRow.innerHTML = "";
 
       for (const type in bananaTypes) {
-        const b = bananaTypes[type];
-        const count = userData.inventory[type] || 0;
-        const stock = globalStock[type] ?? 0;
-
-        topRow.innerHTML += `
-          <div class="seed-card">
-            <h3>${b.name}</h3>
-            <p>Seeds: ${count}</p>
-            <p>Stock: ${stock}</p>
-            <p>Buy: $${b.basePrice}</p>
-            <button onclick="buySeed('${type}')">Buy</button>
-            <button onclick="plantSeed('${type}')">Plant</button>
-          </div>
+        const seed = bananaTypes[type];
+        const card = document.createElement("div");
+        card.className = "seed-card";
+        card.innerHTML = `
+          <h3>${seed.name} Banana</h3>
+          <p>Price: $${seed.basePrice}</p>
+          <p>Stock: ${globalStock[type] || 0}</p>
+          <p>You have: ${userData.inventory[type] || 0}</p>
+          <button id="buy-${type}">Buy Seed</button>
+          <button id="plant-${type}" ${userData.inventory[type] <= 0 ? "disabled" : ""}>Plant</button>
         `;
-      }
-    }
 
-    window.buySeed = buySeed;
-    window.plantSeed = plantSeed;
+        topRow.appendChild(card);
+
+        card.querySelector(`#buy-${type}`).onclick = () => buySeed(type);
+        card.querySelector(`#plant-${type}`).onclick = () => plantSeed(type);
+      }
+
+      // Clear trees container (keep current trees)
+      // Trees are added dynamically when planting, so no need to clear here
+    }
   </script>
 </body>
 </html>
