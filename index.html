@@ -1,1 +1,150 @@
-Game updating please come back later...
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FFE135, #FFC107);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+        }
+
+        .banana-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #FF8F00;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .description {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            display: inline-block;
+        }
+
+        .features li {
+            margin: 10px 0;
+            font-size: 1.05em;
+            color: #666;
+        }
+
+        .features li::before {
+            content: "🍌 ";
+            margin-right: 8px;
+        }
+
+        .login-btn {
+            background: linear-gradient(45deg, #FF8F00, #FFA726);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px rgba(255, 143, 0, 0.3);
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(255, 143, 0, 0.4);
+            background: linear-gradient(45deg, #F57C00, #FF9800);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="banana-icon">🍌</div>
+        <h1>Banana Game</h1>
+        <p class="subtitle">The most a-peel-ing game you'll ever play!</p>
+        
+        <p class="description">
+            Welcome to Banana Stock, the ultimate banana growing game!
+        </p>
+
+        <ul class="features">
+            <li>Grow bananas</li>
+            <li>Make money</li>
+            <li>Cool animations</li>
+            
+        </ul>
+
+        <p class="description">
+            Are you ready to go bananas and become the ultimate banana grower? 
+            Join us players already having a blast!
+        </p>
+
+        <p class="footer-text">Ready to start your banana adventure?</p>
+    </div>
+
+    <button class="login-btn" id="login-btn">🍌 Start Playing - Log In/create account</button>
+
+    <script>
+        document.getElementById('login-btn').addEventListener('click', function() {
+            window.location.href = '/log-in';
+        });
+    </script>
+</body>
+</html>
