@@ -3,50 +3,736 @@
 <head>
   <meta charset="UTF-8" />
   <title>Enhanced Banana Grower</title>
-  <!-- Styles kept as-is -->
   <style>
-    /* Your full CSS from the original file remains unchanged */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #fefae0 0%, #f7f3d0 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+
+    /* Animated particles background */
+    .particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.1;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    /* Loading screen with animation */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(45deg, #fefae0, #f7f3d0);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      font-weight: bold;
+      color: #665c00;
+      z-index: 9999;
+    }
+
+    .loading-spinner {
+      font-size: 3em;
+      animation: spin 2s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    h1 {
+      color: #665c00;
+      font-size: 3em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, #ffffff, #f0f0f0);
+      border: 2px solid #e0e0e0;
+      border-radius: 15px;
+      padding: 15px 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      min-width: 120px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #2e7d32;
+      margin: 5px 0;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #top-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .seed-card {
+      background: linear-gradient(145deg, #fff9c4, #f5f5dc);
+      border: 3px solid #ffecb3;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .seed-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border-color: #ffd54f;
+    }
+
+    .seed-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: rotate(45deg);
+      transition: all 0.5s;
+      opacity: 0;
+    }
+
+    .seed-card:hover::before {
+      animation: shine 0.5s ease-in-out;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+    }
+
+    .seed-card h3 {
+      margin: 5px 0 15px 0;
+      color: #a18800;
+      font-size: 1.3em;
+    }
+
+    .seed-info {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .seed-card button {
+      margin: 8px 5px;
+      padding: 10px 18px;
+      border: none;
+      background: linear-gradient(145deg, #ffd54f, #ffb74d);
+      color: #5d4037;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .seed-card button:hover:not(:disabled) {
+      background: linear-gradient(145deg, #ffe082, #ffcc02);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .seed-card button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .trees-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+
+    .banana-tree {
+      background: linear-gradient(145deg, #e0f7fa, #b2ebf2);
+      border: 3px solid #4dd0e1;
+      border-radius: 20px;
+      padding: 25px;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: bold;
+      color: #00796b;
+      font-size: 2.5em;
+      user-select: none;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .banana-tree:hover {
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+      border-color: #26c6da;
+    }
+
+    .banana-tree.ready {
+      background: linear-gradient(145deg, #c8e6c9, #a5d6a7);
+      border-color: #66bb6a;
+      animation: readyPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes readyPulse {
+      0%, 100% { box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+      50% { box-shadow: 0 8px 25px rgba(102, 187, 106, 0.4); }
+    }
+
+    .banana-tree button {
+      margin-top: 15px;
+      background: linear-gradient(145deg, #66bb6a, #4caf50);
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      font-size: 0.5em;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .banana-tree button:hover {
+      background: linear-gradient(145deg, #4caf50, #388e3c);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(76,175,80,0.5);
+    }
+
+    .fly-banana {
+      position: fixed;
+      font-size: 2em;
+      z-index: 1000;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .money-popup {
+      position: fixed;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #4caf50;
+      z-index: 1001;
+      pointer-events: none;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    #delete-data {
+      background: linear-gradient(145deg, #ff5252, #f44336);
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      margin: 20px 10px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #delete-data:hover {
+      background: linear-gradient(145deg, #f44336, #d32f2f);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .achievements {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .achievement {
+      background: linear-gradient(145deg, #fff3e0, #ffe0b2);
+      border: 2px solid #ffcc02;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 0.9em;
+      font-weight: bold;
+      color: #e65100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .achievement.unlocked {
+      background: linear-gradient(145deg, #e8f5e8, #c8e6c9);
+      border-color: #4caf50;
+      color: #2e7d32;
+      animation: achievementUnlock 0.5s ease-out;
+    }
+
+    @keyframes achievementUnlock {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .stats-row {
+        gap: 15px;
+      }
+      
+      .stat-card {
+        padding: 10px 15px;
+        min-width: 100px;
+      }
+      
+      #top-row {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+      }
+      
+      .banana-tree {
+        font-size: 2em;
+        padding: 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- HTML content kept as-is -->
+  <!-- Animated background particles -->
   <div id="particles"></div>
+
+  <!-- Loading screen -->
   <div id="loading-screen">
     <div class="loading-spinner">🍌</div>
     <div>Loading your banana empire...</div>
   </div>
+
   <div id="auth" style="display: none;">
     <h1>🍌 Welcome to Banana Empire 🍌</h1>
     <p>Sign in to start growing your banana business!</p>
-    <button id="login">Sign in with Google</button>
+    <button id="login" style="padding: 15px 30px; font-size: 1.2em; border-radius: 25px; border: none; background: linear-gradient(145deg, #4caf50, #45a049); color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">Sign in with Google</button>
   </div>
+
   <div id="game" style="display: none;">
     <h1>🍌 Banana Empire 🍌</h1>
     <h2 id="user-info">Welcome, UNDEFINED</h2>
+    
+    <!-- Stats Row -->
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-value" id="cash">$0</div><div class="stat-label">Money</div></div>
-      <div class="stat-card"><div class="stat-value" id="total-sold">0</div><div class="stat-label">Bananas Sold</div></div>
-      <div class="stat-card"><div class="stat-value" id="trees-planted">0</div><div class="stat-label">Trees Planted</div></div>
-      <div class="stat-card"><div class="stat-value" id="level">1</div><div class="stat-label">Level</div></div>
+      <div class="stat-card">
+        <div class="stat-value" id="cash">$0</div>
+        <div class="stat-label">Money</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-sold">0</div>
+        <div class="stat-label">Bananas Sold</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="trees-planted">0</div>
+        <div class="stat-label">Trees Planted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="level">1</div>
+        <div class="stat-label">Level</div>
+      </div>
     </div>
+
+    <!-- Achievements -->
     <div class="achievements" id="achievements"></div>
+
+    <!-- Control buttons -->
     <button id="delete-data" style="display:none;">🗑️ Delete My Data</button>
-    <button id="auto-sell" style="display:none;">🤖 Auto-Sell ($100)</button>
+    <button id="auto-sell" style="display:none; margin: 20px 10px; padding: 12px 25px; border: none; border-radius: 25px; background: linear-gradient(145deg, #2196f3, #1976d2); color: white; cursor: pointer; font-weight: bold;">🤖 Auto-Sell ($100)</button>
+
+    <!-- Seeds section -->
     <div id="top-row"></div>
+    
+    <!-- Trees section -->
     <div class="trees-container" id="trees"></div>
   </div>
-  <script type="module">
-    // Firebase imports and app initialization (unchanged from original)
 
-    // Code logic (unchanged until end of original script)
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      authDomain: "websites-be0b4.firebaseapp.com",
+      projectId: "websites-be0b4",
+      storageBucket: "websites-be0b4.appspot.com",
+      messagingSenderId: "1027369012808",
+      appId: "1:1027369012808:web:3d7ed70ba0234ada62d27d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const bananaTypes = {
+      normal: { name: "Classic", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴", "🌿", "🌳"], emoji: "🟡", unlock: 0 },
+      big: { name: "Giant", growTime: 7000, basePrice: 12, growthStages: ["🌱", "🪴", "🌿", "🌳"], emoji: "🟠", unlock: 5 },
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 30, growthStages: ["🌱", "🪴", "🌿", "🌳"], emoji: "🌈", unlock: 20 },
+      mythical: { name: "Mythical", growTime: 15000, basePrice: 75, growthStages: ["🌱", "🪴", "🌿", "🌳"], emoji: "✨", unlock: 50 },
+      cosmic: { name: "Cosmic", growTime: 25000, basePrice: 200, growthStages: ["🌱", "🪴", "🌿", "🌳"], emoji: "🌌", unlock: 100 }
+    };
+
+    const achievements = [
+      { id: "first_banana", name: "First Harvest", desc: "Sell your first banana", requirement: 1, stat: "totalSold" },
+      { id: "banana_farmer", name: "Banana Farmer", desc: "Sell 25 bananas", requirement: 25, stat: "totalSold" },
+      { id: "banana_tycoon", name: "Banana Tycoon", desc: "Sell 100 bananas", requirement: 100, stat: "totalSold" },
+      { id: "tree_planter", name: "Tree Planter", desc: "Plant 10 trees", requirement: 10, stat: "treesPlanted" },
+      { id: "forest_owner", name: "Forest Owner", desc: "Plant 50 trees", requirement: 50, stat: "treesPlanted" },
+      { id: "millionaire", name: "Millionaire", desc: "Earn $1000", requirement: 1000, stat: "cash" }
+    ];
+
+    let userDocRef, userData, globalStock = {}, autoSellEnabled = false;
+    const stockDocRef = doc(db, "bananaStock", "current");
+
+    // Create animated background particles
+    function createParticles() {
+      const particles = document.getElementById('particles');
+      const particleEmojis = ['🍌', '🌱', '🌳', '💰', '⭐'];
+      
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.fontSize = (Math.random() * 1.5 + 0.5) + 'em';
+        particle.style.animationDelay = Math.random() * 6 + 's';
+        particles.appendChild(particle);
+      }
+    }
+
+    // Initialize particles
+    createParticles();
+
+    document.getElementById('login').onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider);
+    };
+
+    function showLoadingScreen(show) {
+      const loading = document.getElementById('loading-screen');
+      loading.style.display = show ? 'flex' : 'none';
+    }
+
+    async function loadUserData(user) {
+      userDocRef = doc(db, "bananaUsers", user.uid);
+      const docSnap = await getDoc(userDocRef);
+
+      if (docSnap.exists()) {
+        userData = docSnap.data();
+        // Ensure new stats exist
+        if (!userData.totalSold) userData.totalSold = 0;
+        if (!userData.treesPlanted) userData.treesPlanted = 0;
+        if (!userData.level) userData.level = 1;
+        if (!userData.achievements) userData.achievements = [];
+        if (!userData.autoSell) userData.autoSell = false;
+      } else {
+        userData = {
+          cash: 10,
+          inventory: { normal: 0, big: 0, rainbow: 0, mythical: 0, cosmic: 0 },
+          totalSold: 0,
+          treesPlanted: 0,
+          level: 1,
+          achievements: [],
+          autoSell: false
+        };
+        await setDoc(userDocRef, userData);
+      }
+
+      const stockSnap = await getDoc(stockDocRef);
+      globalStock = stockSnap.exists() ? stockSnap.data() : {
+        normal: 100, big: 50, rainbow: 25, mythical: 10, cosmic: 5
+      };
+      
+      autoSellEnabled = userData.autoSell;
+    }
+
+    function calculateLevel() {
+      return Math.floor(userData.totalSold / 10) + 1;
+    }
+
+    function checkAchievements() {
+      achievements.forEach(achievement => {
+        if (!userData.achievements.includes(achievement.id)) {
+          let currentValue = userData[achievement.stat];
+          if (currentValue >= achievement.requirement) {
+            userData.achievements.push(achievement.id);
+            showAchievementUnlock(achievement);
+          }
+        }
+      });
+    }
+
+    function showAchievementUnlock(achievement) {
+      // Visual notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(145deg, #4caf50, #45a049);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-weight: bold;
+        animation: slideIn 0.5s ease-out;
+      `;
+      notification.innerHTML = `
+        <div style="font-size: 1.2em;">🏆 Achievement Unlocked!</div>
+        <div>${achievement.name}</div>
+        <div style="font-size: 0.9em; opacity: 0.9;">${achievement.desc}</div>
+      `;
+      
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 4000);
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        showLoadingScreen(false);
+        document.getElementById('auth').style.display = 'block';
+        document.getElementById('game').style.display = 'none';
+        return;
+      }
+
+      showLoadingScreen(true);
+      await loadUserData(user);
+      
+      onSnapshot(stockDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          globalStock = docSnap.data();
+          render();
+        }
+      });
+
+      document.getElementById('user-info').textContent = `Welcome back, ${user.displayName}!`;
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+
+      const deleteBtn = document.getElementById('delete-data');
+      const autoSellBtn = document.getElementById('auto-sell');
+      
+      deleteBtn.style.display = 'inline-block';
+      if (userData.level >= 3) {
+        autoSellBtn.style.display = 'inline-block';
+        autoSellBtn.textContent = autoSellEnabled ? '🤖 Auto-Sell (ON)' : '🤖 Auto-Sell ($100)';
+      }
+
+      deleteBtn.onclick = async () => {
+        if (confirm("Are you sure you want to delete your data? This cannot be undone.")) {
+          try {
+            await deleteDoc(userDocRef);
+            alert("Your data was deleted. The page will reload.");
+            location.reload();
+          } catch (e) {
+            alert("Error deleting data: " + e.message);
+          }
+        }
+      };
+
+      autoSellBtn.onclick = async () => {
+        if (!autoSellEnabled && userData.cash >= 100) {
+          userData.cash -= 100;
+          userData.autoSell = true;
+          autoSellEnabled = true;
+          await updateDoc(userDocRef, { cash: userData.cash, autoSell: true });
+          autoSellBtn.textContent = '🤖 Auto-Sell (ON)';
+          render();
+        }
+      };
+
+      render();
+      setTimeout(() => showLoadingScreen(false), 1000);
+    });
+
+    async function buySeed(type) {
+      const cost = bananaTypes[type].basePrice;
+      if (userData.cash >= cost && globalStock[type] > 0) {
+        userData.cash -= cost;
+        userData.inventory[type]++;
+        globalStock[type]--;
+
+        await Promise.all([
+          updateDoc(userDocRef, {
+            cash: userData.cash,
+            inventory: userData.inventory
+          }),
+          updateDoc(stockDocRef, { [type]: globalStock[type] })
+        ]);
+
+        render();
+      } else {
+        alert(userData.cash < cost ? "Not enough money!" : "Out of stock!");
+      }
+    }
+
+    function createMoneyPopup(x, y, amount) {
+      const popup = document.createElement("div");
+      popup.className = "money-popup";
+      popup.textContent = `+$${amount}`;
+      popup.style.left = x + "px";
+      popup.style.top = y + "px";
+      document.body.appendChild(popup);
+
+      popup.animate([
+        { transform: "translateY(0) scale(1)", opacity: 1 },
+        { transform: "translateY(-50px) scale(1.2)", opacity: 0 }
+      ], {
+        duration: 1000,
+        easing: "ease-out"
+      }).onfinish = () => popup.remove();
+    }
+
+    async function sellBananaWithAnimation(buttonEl, treeEl, type) {
+      buttonEl.disabled = true;
+
+      const profit = bananaTypes[type].basePrice + Math.floor(Math.random() * 5) + userData.level;
+      userData.cash += profit;
+      userData.totalSold++;
+      userData.level = calculateLevel();
+      
+      checkAchievements();
+
+      await updateDoc(userDocRef, { 
+        cash: userData.cash, 
+        totalSold: userData.totalSold,
+        level: userData.level,
+        achievements: userData.achievements
+      });
+
+      const treeRect = treeEl.getBoundingClientRect();
+      createMoneyPopup(treeRect.left + treeRect.width / 2, treeRect.top + 20, profit);
+
+      // Enhanced banana flying animation
+      const cashCounter = document.getElementById("cash");
+      const cashRect = cashCounter.getBoundingClientRect();
+      const startX = treeRect.left + treeRect.width / 2;
+      const startY = treeRect.top + treeRect.height / 2;
+      const endX = cashRect.left + cashRect.width / 2;
+      const endY = cashRect.top + cashRect.height / 2;
+
+      for (let i = 0; i < 15; i++) {
+        const bananaIcon = document.createElement("div");
+        bananaIcon.className = "fly-banana";
+        bananaIcon.textContent = "🍌";
+        bananaIcon.style.left = startX + (Math.random() * 40 - 20) + "px";
+        bananaIcon.style.top = startY + (Math.random() * 40 - 20) + "px";
+        document.body.appendChild(bananaIcon);
+
+        const deltaX = endX - parseFloat(bananaIcon.style.left);
+        const deltaY = endY - parseFloat(bananaIcon.style.top);
+
+        bananaIcon.animate([
+          { transform: "translate(0, 0) rotate(0deg)", opacity: 1, filter: "hue-rotate(0deg)" },
+          { transform: `translate(${deltaX}px, ${deltaY}px) rotate(360deg) scale(0.3)`, opacity: 0, filter: "hue-rotate(180deg)" }
+        ], {
+          duration: 1200 + Math.random() * 400,
+          easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          delay: i * 80
+        }).onfinish = () => bananaIcon.remove();
+      }
+
+      setTimeout(() => {
+        treeEl.remove();
+        render();
+      }, 1800);
+    }
 
     async function plantSeed(type) {
       if (userData.inventory[type] <= 0) return;
       userData.inventory[type]--;
       userData.treesPlanted++;
       userData.level = calculateLevel();
+      
       checkAchievements();
-      await updateDoc(userDocRef, {
+      
+      await updateDoc(userDocRef, { 
         inventory: userData.inventory,
         treesPlanted: userData.treesPlanted,
         level: userData.level,
@@ -63,8 +749,10 @@
         <div style="font-size: 1em;">${growthStages[0]}</div>
         <div class="progress-bar">
           <div class="progress-fill" style="width: 0%"></div>
-        </div>`;
-
+</div>
+</script>       <!-- Closing the script tag -->
+</body>         <!-- Closing the body -->
+</html>         <!-- Final closing tag for the document -->
       const progressFill = treeEl.querySelector(".progress-fill");
       let currentStage = 0;
       let interval = growTime / growthStages.length;
