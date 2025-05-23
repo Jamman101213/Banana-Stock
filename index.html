@@ -1,4 +1,6 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
   <title>Banana Grower with Stock</title>
   <style>
@@ -100,65 +102,18 @@
       pointer-events: none;
       user-select: none;
     }
-
-    #restock-btn {
-      margin: 20px;
-      padding: 10px 20px;
-      background: #8bc34a;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
   </style>
-<link rel="stylesheet" href="chrome-extension://bojobppfploabceghnmlahpoonbcbacn/app/content-style.css"></head>
+</head>
 <body>
   <h1>🍌 Banana Grower</h1>
   <div id="auth" style="display: none;">
     <button id="login">Sign in with Google</button>
   </div>
 
-  <div id="game" style="display: block;">
+  <div id="game" style="display: none;">
     <h2 id="user-info">Welcome,</h2>
-    <h3>Money: $<span id="cash">???</span></h3>
-    <div id="top-row">
-          <div class="seed-card">
-            <h3>Normal:</h3>
-            <p>Seeds:</p>
-            <p>Stock:</p>
-            <p>Buy:</p>
-            <button onclick="buySeed('normal')">Buy</button>
-            <button onclick="plantSeed('normal')">Plant</button>
-          </div>
-        
-          <div class="seed-card">
-            <h3>Big</h3>
-            <p>Seeds:</p>
-            <p>Stock:</p>
-            <p>Buy:</p>
-            <button onclick="buySeed('big')">Buy</button>
-            <button onclick="plantSeed('big')">Plant</button>
-          </div>
-        
-          <div class="seed-card">
-            <h3>Rainbow</h3>
-            <p>Seeds:</p>
-            <p>Stock:</p>
-            <p>Buy:</p>
-            <button onclick="buySeed('rainbow')">Buy</button>
-            <button onclick="plantSeed('rainbow')">Plant</button>
-          </div>
-        
-          <div class="seed-card">
-            <h3>Mythical</h3>
-            <p>Seeds:</p>
-            <p>Stock:</p>
-            <p>Buy:</p>
-            <button onclick="buySeed('mythical')">Buy</button>
-            <button onclick="plantSeed('mythical')">Plant</button>
-          </div>
-        </div>
+    <h3>Money: $<span id="cash"></span></h3>
+    <div id="top-row"></div>
     <div id="trees"></div>
   </div>
 
@@ -196,39 +151,39 @@
     };
 
     onAuthStateChanged(auth, async user => {
-      if (user) {
-        document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
+      if (!user) return;
 
-        userDocRef = doc(db, "bananaUsers", user.uid);
-        const docSnap = await getDoc(userDocRef);
+      document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
 
-        if (docSnap.exists()) {
-          userData = docSnap.data();
-        } else {
-          userData = {
-            cash: 10,
-            inventory: {
-              normal: 0,
-              big: 0,
-              rainbow: 0,
-              mythical: 0
-            }
-          };
-          await setDoc(userDocRef, userData);
-        }
+      userDocRef = doc(db, "bananaUsers", user.uid);
+      const docSnap = await getDoc(userDocRef);
 
-        const stockSnap = await getDoc(stockDocRef);
-        globalStock = stockSnap.exists() ? stockSnap.data() : {
-          normal: 0,
-          big: 0,
-          rainbow: 0,
-          mythical: 0
+      if (docSnap.exists()) {
+        userData = docSnap.data();
+      } else {
+        userData = {
+          cash: 10,
+          inventory: {
+            normal: 0,
+            big: 0,
+            rainbow: 0,
+            mythical: 0
+          }
         };
-
-        render();
+        await setDoc(userDocRef, userData);
       }
+
+      const stockSnap = await getDoc(stockDocRef);
+      globalStock = stockSnap.exists() ? stockSnap.data() : {
+        normal: 0,
+        big: 0,
+        rainbow: 0,
+        mythical: 0
+      };
+
+      render();
     });
 
     async function buySeed(type) {
@@ -287,9 +242,7 @@
           duration: 1000,
           easing: "ease-in-out",
           delay: i * 100
-        }).onfinish = () => {
-          bananaIcon.remove();
-        };
+        }).onfinish = () => bananaIcon.remove();
       }
 
       setTimeout(() => {
@@ -355,6 +308,5 @@
     window.buySeed = buySeed;
     window.plantSeed = plantSeed;
   </script>
-
-
-</body></html>
+</body>
+</html>
