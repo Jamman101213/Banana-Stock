@@ -11,11 +11,9 @@
       margin: 0;
       padding: 20px;
     }
-
     h1 {
       color: #665c00;
     }
-
     #top-row {
       display: flex;
       flex-wrap: wrap;
@@ -23,7 +21,6 @@
       gap: 20px;
       margin-bottom: 20px;
     }
-
     .seed-card {
       background: #fff9c4;
       border: 2px solid #ffecb3;
@@ -32,12 +29,10 @@
       width: 160px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
     .seed-card h3 {
       margin: 5px 0;
       color: #a18800;
     }
-
     .seed-card button {
       margin: 5px 5px 0 5px;
       padding: 5px 10px;
@@ -49,11 +44,9 @@
       font-weight: bold;
       transition: background 0.3s ease;
     }
-
     .seed-card button:hover {
       background: #ffe082;
     }
-
     .banana-tree {
       margin: 10px auto;
       padding: 15px;
@@ -68,7 +61,6 @@
       font-size: 2em;
       user-select: none;
     }
-
     .banana-tree button {
       margin-top: 10px;
       background: #b2dfdb;
@@ -81,11 +73,9 @@
       font-size: 0.6em;
       user-select: none;
     }
-
     .banana-tree button:hover {
       background: #a5d6a7;
     }
-
     #cash {
       font-weight: bold;
       font-size: 1.8em;
@@ -94,39 +84,23 @@
       position: relative;
       min-width: 50px;
     }
-
-    .fly-banana {
-      position: fixed;
-      font-size: 2em;
-      z-index: 1000;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    #stock-update {
+    #stock-update, #sell-all {
       margin: 10px;
       padding: 10px 20px;
-      background: #ffcc80;
       border: none;
       border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
     }
-
+    #stock-update {
+      background: #ffcc80;
+    }
     #stock-update:hover {
       background: #ffb74d;
     }
-
     #sell-all {
-      margin: 10px;
-      padding: 10px 20px;
       background: #a5d6a7;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
     }
-
     #sell-all:hover {
       background: #81c784;
     }
@@ -144,7 +118,6 @@
     <button id="stock-update">Update Stock</button>
     <button id="sell-all">Sell All</button>
     <div id="top-row"></div>
-    <div id="trees"></div>
   </div>
 
   <script type="module">
@@ -153,7 +126,7 @@
     import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSy AiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
+      apiKey: "AIzaSyAiNsBnqgY2i1aLzyJEC0YcwDoGJTGYLiM",
       authDomain: "websites-be0b4.firebaseapp.com",
       projectId: "websites-be0b4",
       storageBucket: "websites-be0b4.appspot.com",
@@ -166,52 +139,31 @@
     const db = getFirestore(app);
 
     const bananaTypes = {
-      normal: { 
-        name: "Normal", 
-        growTime: 4000, 
-        basePrice: 5, 
-        growthStages: ["🌱", "🪴", "🌴"] 
-      },
-      big: { 
-        name: "Big", 
-        growTime: 7000, 
-        basePrice: 10, 
-        growthStages: ["🌱", "🪴", "🌴"] 
-      },
-      rainbow: { 
-        name: "Rainbow", 
-        growTime: 10000, 
-        basePrice: 25, 
-        growthStages: ["🌱", "🪴", "🌴"] 
-      },
-      mythical: { 
-        name: "Mythical", 
-        growTime: 20000, 
-        basePrice: 50, 
-        growthStages: ["🌱", "🪴", "🌴"] 
-      }
+      normal: { name: "Normal", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴", "🌴"] },
+      big: { name: "Big", growTime: 7000, basePrice: 10, growthStages: ["🌱", "🪴", "🌴"] },
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 25, growthStages: ["🌱", "🪴", "🌴"] },
+      mythical: { name: "Mythical", growTime: 20000, basePrice: 50, growthStages: ["🌱", "🪴", "🌴"] }
     };
 
     let userDocRef, userData;
     let stockData = {};
 
+    // Google Sign-in button handler
     document.getElementById('login').addEventListener('click', async () => {
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    console.log("Signed in user:", user.displayName, user.email);
-    document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
-    document.getElementById('auth').style.display = 'none';
-    document.getElementById('game').style.display = 'block';
-  } catch (error) {
-    console.error("Sign-in error:", error);
-  }
-});
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        // user is handled in onAuthStateChanged below
+      } catch (error) {
+        console.error("Sign-in error:", error);
+        alert("Sign-in failed, check console.");
+      }
+    });
 
-    onAuthStateChanged(auth, async user => {
+    // Auth state observer - runs on login/logout
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        document.getElementById('user-info').textContent = `Welcome, ${user.displayName} (${user.email})`;
+        document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
         document.getElementById('auth').style.display = 'none';
         document.getElementById('game').style.display = 'block';
 
@@ -223,18 +175,17 @@
         } else {
           userData = {
             cash: 10,
-            inventory: {
-              normal: 0,
-              big: 0,
-              rainbow: 0,
-              mythical: 0
-            }
+            inventory: { normal: 0, big: 0, rainbow: 0, mythical: 0 }
           };
           await setDoc(userDocRef, userData);
         }
 
         await fetchStock();
         render();
+      } else {
+        // No user signed in
+        document.getElementById('auth').style.display = 'block';
+        document.getElementById('game').style.display = 'none';
       }
     });
 
@@ -246,9 +197,9 @@
       } else {
         stockData = {
           normal: 20,
-          big: 10,
-          rainbow: 5,
-          mythical: 2
+          big: 15,
+          rainbow: 10,
+          mythical: 5
         };
         await setDoc(stockDocRef, stockData);
       }
@@ -260,20 +211,17 @@
       for (const type in bananaTypes) {
         let maxStock;
         switch (type) {
-          case 'normal':
-            maxStock = 20;
-            break;
-          case 'big':
-            maxStock = 15;
-            break;
-          case 'rainbow':
-            maxStock = 10;
-            break;
-          case 'mythical':
-            maxStock = 5;
-            break;
+          case 'normal': maxStock = 20; break;
+          case 'big': maxStock = 15; break;
+          case 'rainbow': maxStock = 10; break;
+          case 'mythical': maxStock = 5; break;
         }
-        newStock[type] = Math.floor(Math.random() * (maxStock + 1));
+        // Chance of 80% stock for rare bananas, 100% for normal
+        if (type === 'normal' || Math.random() < 0.8) {
+          newStock[type] = Math.floor(Math.random() * (maxStock + 1));
+        } else {
+          newStock[type] = 0;
+        }
       }
       await setDoc(stockDocRef, newStock);
       stockData = newStock;
@@ -286,38 +234,87 @@
       const cost = bananaTypes[type].basePrice;
       const stockDocRef = doc(db, "bananaStock", "globalStock");
 
-      await runTransaction(db, async (transaction) => {
-        const stockDoc = await transaction.get(stockDocRef);
-        if (!stockDoc.exists()) throw "Stock document does not exist!";
-        const currentStock = stockDoc.data();
+      try {
+        await runTransaction(db, async (transaction) => {
+          const stockDoc = await transaction.get(stockDocRef);
+          if (!stockDoc.exists()) throw "Stock document does not exist!";
+          const currentStock = stockDoc.data();
 
-        if (currentStock[type] > 0 && userData.cash >= cost) {
-          currentStock[type]--;
-          userData.cash -= cost;
-          userData.inventory[type]++;
+          if (currentStock[type] > 0 && userData.cash >= cost) {
+            currentStock[type]--;
+            userData.cash -= cost;
+            userData.inventory[type]++;
 
-          transaction.update(stockDocRef, { [type]: currentStock[type] });
-          transaction.update(userDocRef, {
-            cash: userData.cash,
-            inventory: userData.inventory
-          });
+            transaction.update(stockDocRef, { [type]: currentStock[type] });
+            transaction.update(userDocRef, {
+              cash: userData.cash,
+              inventory: userData.inventory
+            });
 
-          stockData[type] = currentStock[type];
-        } else {
-          alert("Not enough stock or cash!");
-        }
-      });
+            stockData[type] = currentStock[type];
+          } else {
+            alert("Not enough stock or cash!");
+          }
+        });
+      } catch (err) {
+        alert("Transaction failed: " + err);
+      }
 
       render();
     }
 
-    async function sellBananaWithAnimation(buttonEl, treeEl, type) {
-      buttonEl.disabled = true;
+    async function sellAll() {
+      let totalEarned = 0;
+      for (const type in userData.inventory) {
+        const count = userData.inventory[type];
+        if (count > 0) {
+          totalEarned += count * bananaTypes[type].basePrice;
+          userData.inventory[type] = 0;
+        }
+      }
+      userData.cash += totalEarned;
+      await updateDoc(userDocRef, { cash: userData.cash, inventory: userData.inventory });
+      render();
+      alert(`You sold all bananas for $${totalEarned}`);
+    }
 
-      const cashCounter = document.getElementById("cash");
-      const cashRect = cashCounter.getBoundingClientRect();
-      const treeRect = treeEl.getBoundingClientRect();
+    document.getElementById('sell-all').onclick = sellAll;
 
-     
-::contentReference[oaicite:1]{index=1}
- 
+    function render() {
+      document.getElementById('cash').textContent = userData.cash;
+
+      const topRow = document.getElementById('top-row');
+      topRow.innerHTML = '';
+
+      for (const type in bananaTypes) {
+        const seed = bananaTypes[type];
+        const stock = stockData[type] ?? 0;
+        const owned = userData.inventory[type] ?? 0;
+
+        const card = document.createElement('div');
+        card.className = 'seed-card';
+
+        const title = document.createElement('h3');
+        title.textContent = `${seed.name} Banana`;
+        card.appendChild(title);
+
+        const stockEl = document.createElement('p');
+        stockEl.textContent = `Stock: ${stock}`;
+        card.appendChild(stockEl);
+
+        const ownedEl = document.createElement('p');
+        ownedEl.textContent = `Owned: ${owned}`;
+        card.appendChild(ownedEl);
+
+        const buyBtn = document.createElement('button');
+        buyBtn.textContent = `Buy ($${seed.basePrice})`;
+        buyBtn.disabled = stock <= 0 || userData.cash < seed.basePrice;
+        buyBtn.onclick = () => buySeed(type);
+        card.appendChild(buyBtn);
+
+        topRow.appendChild(card);
+      }
+    }
+  </script>
+</body>
+</html>
