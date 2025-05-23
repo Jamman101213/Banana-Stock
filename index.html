@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Banana Grower with Growth Animation</title>
+  <title>Banana Grower with Stock</title>
   <style>
     body {
       background: #fefae0;
@@ -102,6 +102,17 @@
       pointer-events: none;
       user-select: none;
     }
+
+    #restock-btn {
+      margin: 20px;
+      padding: 10px 20px;
+      background: #8bc34a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -113,6 +124,7 @@
   <div id="game" style="display:none;">
     <h2 id="user-info"></h2>
     <h3>Money: $<span id="cash">0</span></h3>
+    <button id="restock-btn">🔁 Restock Banana Seeds</button>
     <div id="top-row"></div>
     <div id="trees"></div>
   </div>
@@ -135,33 +147,15 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-const bananaTypes = {
-  normal: { 
-    name: "Normal", 
-    growTime: 4000, 
-    basePrice: 5, 
-    growthStages: ["🌱", "🪴", "🌴"] 
-  },
-  big: { 
-    name: "Big", 
-    growTime: 7000, 
-    basePrice: 10, 
-    growthStages: ["🌱", "🪴", "🌴"] 
-  },
-  rainbow: { 
-    name: "Rainbow", 
-    growTime: 10000, 
-    basePrice: 25, 
-    growthStages: ["🌱", "🪴", "🌴"] 
-  },
-mythical: { 
-    name: "Mythical", 
-    growTime: 20000, 
-    basePrice: 50, 
-    growthStages: ["🌱", "🪴", "🌴"] 
-  }
-};
-    let userDocRef, userData;
+    const bananaTypes = {
+      normal: { name: "Normal", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴", "🌴"] },
+      big: { name: "Big", growTime: 7000, basePrice: 10, growthStages: ["🌱", "🪴", "🌴"] },
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 25, growthStages: ["🌱", "🪴", "🌴"] },
+      mythical: { name: "Mythical", growTime: 20000, basePrice: 50, growthStages: ["🌱", "🪴", "🌴"] }
+    };
+
+    let userDocRef, userData, globalStock = {};
+    const stockDocRef = doc(db, "bananaStock", "current");
 
     document.getElementById('login').onclick = () => {
       const provider = new GoogleAuthProvider();
@@ -192,20 +186,55 @@ mythical: {
           await setDoc(userDocRef, userData);
         }
 
+        const stockSnap = await getDoc(stockDocRef);
+        globalStock = stockSnap.exists() ? stockSnap.data() : {
+          normal: 0,
+          big: 0,
+          rainbow: 0,
+          mythical: 0
+        };
+
         render();
       }
     });
 
+    document.getElementById('restock-btn').onclick = async () => {
+      const newStock = {};
+      for (const type in bananaTypes) {
+        let chance = Math.random();
+        let maxStock = 0;
+
+        if (type === "normal") maxStock = 20;
+        else if (type === "big") maxStock = 10;
+        else if (type === "rainbow") maxStock = 5;
+        else if (type === "mythical") maxStock = 2;
+
+        newStock[type] = chance > 0.5 ? Math.floor(Math.random() * (maxStock + 1)) : 0;
+      }
+
+      await setDoc(stockDocRef, newStock);
+      globalStock = newStock;
+      render();
+    };
+
     async function buySeed(type) {
       const cost = bananaTypes[type].basePrice;
-      if (userData.cash >= cost) {
+      if (userData.cash >= cost && globalStock[type] > 0) {
         userData.cash -= cost;
         userData.inventory[type]++;
-        await updateDoc(userDocRef, {
-          cash: userData.cash,
-          inventory: userData.inventory
-        });
+        globalStock[type]--;
+
+        await Promise.all([
+          updateDoc(userDocRef, {
+            cash: userData.cash,
+            inventory: userData.inventory
+          }),
+          updateDoc(stockDocRef, { [type]: globalStock[type] })
+        ]);
+
         render();
+      } else {
+        alert("Not enough cash or stock!");
       }
     }
 
@@ -216,13 +245,11 @@ mythical: {
       const cashRect = cashCounter.getBoundingClientRect();
       const treeRect = treeEl.getBoundingClientRect();
 
-      // Earn profit for each banana
       const profit = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
       userData.cash += profit;
       await updateDoc(userDocRef, { cash: userData.cash });
-      render(); // update cash display immediately
+      render();
 
-      // Calculate center positions
       const startX = treeRect.left + treeRect.width / 2;
       const startY = treeRect.top + treeRect.height / 2;
       const endX = cashRect.left + cashRect.width / 2;
@@ -232,10 +259,8 @@ mythical: {
         const bananaIcon = document.createElement("div");
         bananaIcon.className = "fly-banana";
         bananaIcon.textContent = "🍌";
-
         bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
         bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
-
         document.body.appendChild(bananaIcon);
 
         const deltaX = endX - parseFloat(bananaIcon.style.left);
@@ -253,7 +278,6 @@ mythical: {
         };
       }
 
-      // Remove tree container after animation
       setTimeout(() => {
         treeEl.remove();
         render();
@@ -263,9 +287,7 @@ mythical: {
     async function plantSeed(type) {
       if (userData.inventory[type] <= 0) return;
       userData.inventory[type]--;
-      await updateDoc(userDocRef, {
-        inventory: userData.inventory
-      });
+      await updateDoc(userDocRef, { inventory: userData.inventory });
       render();
 
       const growthStages = bananaTypes[type].growthStages;
@@ -274,19 +296,17 @@ mythical: {
 
       const tree = document.createElement("div");
       tree.className = "banana-tree";
-      tree.textContent = growthStages[0]; // start with first stage
+      tree.textContent = growthStages[0];
       document.getElementById("trees").appendChild(tree);
 
       let currentStage = 0;
-
       const growInterval = setInterval(() => {
         currentStage++;
         if (currentStage < growthStages.length) {
           tree.textContent = growthStages[currentStage];
         } else {
           clearInterval(growInterval);
-          tree.textContent = `${growthStages[growthStages.length - 1]} ${bananaTypes[type].name} Banana Tree is ready! `;
-
+          tree.textContent = `${growthStages[growthStages.length - 1]} ${bananaTypes[type].name} Banana Tree is ready!`;
           const btn = document.createElement("button");
           btn.textContent = `Sell ${bananaTypes[type].name} Bananas`;
           btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
@@ -297,17 +317,19 @@ mythical: {
 
     function render() {
       document.getElementById('cash').textContent = userData.cash;
-
       const topRow = document.getElementById('top-row');
       topRow.innerHTML = '';
 
       for (const type in bananaTypes) {
         const b = bananaTypes[type];
         const count = userData.inventory[type] || 0;
+        const stock = globalStock[type] ?? 0;
+
         topRow.innerHTML += `
           <div class="seed-card">
             <h3>${b.name}</h3>
             <p>Seeds: ${count}</p>
+            <p>Stock: ${stock}</p>
             <p>Buy: $${b.basePrice}</p>
             <button onclick="buySeed('${type}')">Buy</button>
             <button onclick="plantSeed('${type}')">Plant</button>
