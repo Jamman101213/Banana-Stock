@@ -26,8 +26,11 @@
       border: 2px solid #ffecb3;
       border-radius: 10px;
       padding: 15px;
-      width: 160px;
+      width: 180px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .seed-card h3 {
       margin: 5px 0;
@@ -44,8 +47,13 @@
       font-weight: bold;
       transition: background 0.3s ease;
     }
-    .seed-card button:hover {
+    .seed-card button:hover:not(:disabled) {
       background: #ffe082;
+    }
+    .seed-card button:disabled {
+      background: #e0e0e0;
+      cursor: not-allowed;
+      color: #999;
     }
     .banana-tree {
       margin: 10px auto;
@@ -104,6 +112,34 @@
     #sell-all:hover {
       background: #81c784;
     }
+    .grown-banana {
+      margin-top: 5px;
+      font-size: 1.5em;
+    }
+    .sell-btn {
+      margin-left: 5px;
+      background: #81c784;
+      color: white;
+      padding: 2px 6px;
+      font-size: 0.8em;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      border: none;
+    }
+    .sell-btn:hover {
+      background: #66bb6a;
+    }
+    .bananas-container {
+      margin-top: 10px;
+      width: 100%;
+      min-height: 40px;
+      text-align: left;
+      overflow-y: auto;
+      max-height: 100px;
+      border-top: 1px solid #ffecb3;
+      padding-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -148,19 +184,16 @@
     let userDocRef, userData;
     let stockData = {};
 
-    // Google Sign-in button handler
     document.getElementById('login').addEventListener('click', async () => {
       const provider = new GoogleAuthProvider();
       try {
-        const result = await signInWithPopup(auth, provider);
-        // user is handled in onAuthStateChanged below
+        await signInWithPopup(auth, provider);
       } catch (error) {
         console.error("Sign-in error:", error);
         alert("Sign-in failed, check console.");
       }
     });
 
-    // Auth state observer - runs on login/logout
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
@@ -183,7 +216,6 @@
         await fetchStock();
         render();
       } else {
-        // No user signed in
         document.getElementById('auth').style.display = 'block';
         document.getElementById('game').style.display = 'none';
       }
@@ -216,7 +248,6 @@
           case 'rainbow': maxStock = 10; break;
           case 'mythical': maxStock = 5; break;
         }
-        // Chance of 80% stock for rare bananas, 100% for normal
         if (type === 'normal' || Math.random() < 0.8) {
           newStock[type] = Math.floor(Math.random() * (maxStock + 1));
         } else {
@@ -263,54 +294,174 @@
       render();
     }
 
-    async function sellAll() {
-      let totalEarned = 0;
-      for (const type in userData.inventory) {
-        const count = userData.inventory[type];
-        if (count > 0) {
-          totalEarned += count * bananaTypes[type].basePrice;
-          userData.inventory[type] = 0;
-        }
-      }
-      userData.cash += totalEarned;
-      await updateDoc(userDocRef, { cash: userData.cash, inventory: userData.inventory });
-      render();
-      alert(`You sold all bananas for $${totalEarned}`);
+    // This object stores all growing bananas per type with their current stage index and timeouts
+    const growingBananas = {
+      // type: [{id, stage, timeoutId}, ...]
+    };
+
+    // Sell one grown banana of a given type by removing from growingBananas and increasing cash
+    function sellBanana(type, bananaId) {
+      if (!growingBananas[type]) return;
+      const bananas = growingBananas[type];
+      const index = bananas.findIndex(b => b.id === bananaId);
+      if (index === -1) return;
+
+      bananas.splice(index, 1); // remove banana
+
+      // Increase cash by basePrice
+      userData.cash += bananaTypes[type].basePrice;
+      updateDoc(userDocRef, { cash: userData.cash }).then(() => render());
+
+      alert(`Sold 1 ${bananaTypes[type].name} banana for $${bananaTypes[type].basePrice}`);
     }
 
-    document.getElementById('sell-all').onclick = sellAll;
+    // Generate unique ID for bananas
+    function generateId() {
+      return Math.random().toString(36).substr(2, 9);
+    }
+
+    // When user clicks Grow button, start the growing process for one banana of this type
+    function growBanana(type, seedCard) {
+      if (!growingBananas[type]) growingBananas[type] = [];
+
+      const bananaId = generateId();
+      const stages = bananaTypes[type].growthStages;
+      let currentStage = 0;
+
+      // Create the banana object in growingBananas
+      const bananaObj = { id: bananaId, stage: currentStage, timeoutId: null };
+      growingBananas[type].push(bananaObj);
+
+      // Disable grow button while growing
+      const growBtn = seedCard.querySelector('.grow-btn');
+      growBtn.disabled = true;
+
+      // Container to display the growing bananas
+      const bananasContainer = seedCard.querySelector('.bananas-container');
+
+      // Create the banana element
+      const bananaEl = document.createElement('span');
+      bananaEl.className = 'grown-banana';
+      bananaEl.id = `banana-${bananaId}`;
+      bananaEl.textContent = stages[currentStage];
+
+      // Create sell button, hidden until fully grown
+      const sellBtn = document.createElement('button');
+      sellBtn.textContent = 'Sell';
+      sellBtn.className = 'sell-btn';
+      sellBtn.style.display = 'none';
+
+      // When clicked, sell this banana
+      sellBtn.onclick = () => {
+        sellBanana(type, bananaId);
+      };
+
+      bananaEl.appendChild(sellBtn);
+      bananasContainer.appendChild(bananaEl);
+
+      // Function to update growth stage visually every (growTime / stages.length)
+      function nextStage() {
+        currentStage++;
+        if (currentStage < stages.length) {
+          bananaObj.stage = currentStage;
+          bananaEl.firstChild.textContent = stages[currentStage];
+          bananaObj.timeoutId = setTimeout(nextStage, bananaTypes[type].growTime / stages.length);
+        } else {
+          // Fully grown, show sell button and enable grow button again
+          sellBtn.style.display = 'inline-block';
+          growBtn.disabled = false;
+        }
+      }
+
+      // Start growing stages after first timeout
+      bananaObj.timeoutId = setTimeout(nextStage, bananaTypes[type].growTime / stages.length);
+    }
+
+    // Sell all fully grown bananas by clicking their sell buttons programmatically
+    function sellAllBananas() {
+      for (const type in growingBananas) {
+        const bananas = [...growingBananas[type]]; // copy because we modify inside loop
+        bananas.forEach(banana => {
+          // Only sell bananas fully grown (stage at last)
+          if (banana.stage === bananaTypes[type].growthStages.length - 1) {
+            sellBanana(type, banana.id);
+          }
+        });
+      }
+    }
+
+    document.getElementById('sell-all').onclick = sellAllBananas;
 
     function render() {
-      document.getElementById('cash').textContent = userData.cash;
-
       const topRow = document.getElementById('top-row');
+      const cashEl = document.getElementById('cash');
+      cashEl.textContent = userData.cash;
+
       topRow.innerHTML = '';
 
       for (const type in bananaTypes) {
-        const seed = bananaTypes[type];
-        const stock = stockData[type] ?? 0;
-        const owned = userData.inventory[type] ?? 0;
+        const seedCount = userData.inventory[type] || 0;
+        const stockCount = stockData[type] || 0;
 
+        // Create card for each seed type
         const card = document.createElement('div');
         card.className = 'seed-card';
 
         const title = document.createElement('h3');
-        title.textContent = `${seed.name} Banana`;
+        title.textContent = bananaTypes[type].name + ` ($${bananaTypes[type].basePrice})`;
         card.appendChild(title);
 
-        const stockEl = document.createElement('p');
-        stockEl.textContent = `Stock: ${stock}`;
-        card.appendChild(stockEl);
+        const stockDisplay = document.createElement('p');
+        stockDisplay.textContent = `Stock: ${stockCount}`;
+        card.appendChild(stockDisplay);
 
-        const ownedEl = document.createElement('p');
-        ownedEl.textContent = `Owned: ${owned}`;
-        card.appendChild(ownedEl);
-
+        // Buy button (only if stock > 0)
         const buyBtn = document.createElement('button');
-        buyBtn.textContent = `Buy ($${seed.basePrice})`;
-        buyBtn.disabled = stock <= 0 || userData.cash < seed.basePrice;
+        buyBtn.textContent = 'Buy';
+        buyBtn.disabled = stockCount <= 0 || userData.cash < bananaTypes[type].basePrice;
         buyBtn.onclick = () => buySeed(type);
         card.appendChild(buyBtn);
+
+        // Show how many seeds owned
+        const ownedDisplay = document.createElement('p');
+        ownedDisplay.textContent = `Seeds owned: ${seedCount}`;
+        card.appendChild(ownedDisplay);
+
+        // Grow button appears only if seedCount > 0
+        if (seedCount > 0) {
+          const growBtn = document.createElement('button');
+          growBtn.textContent = 'Grow';
+          growBtn.className = 'grow-btn';
+          growBtn.onclick = () => growBanana(type, card);
+          card.appendChild(growBtn);
+        }
+
+        // Container for grown bananas with sell buttons
+        const bananasContainer = document.createElement('div');
+        bananasContainer.className = 'bananas-container';
+        card.appendChild(bananasContainer);
+
+        // Display currently growing bananas for this type
+        if (growingBananas[type]) {
+          growingBananas[type].forEach(banana => {
+            const stages = bananaTypes[type].growthStages;
+            const bananaEl = document.createElement('span');
+            bananaEl.className = 'grown-banana';
+            bananaEl.id = `banana-${banana.id}`;
+            bananaEl.textContent = stages[banana.stage];
+
+            // Sell button for fully grown bananas only
+            const sellBtn = document.createElement('button');
+            sellBtn.textContent = 'Sell';
+            sellBtn.className = 'sell-btn';
+            sellBtn.style.display = banana.stage === stages.length - 1 ? 'inline-block' : 'none';
+
+            sellBtn.onclick = () => sellBanana(type, banana.id);
+
+            bananaEl.appendChild(sellBtn);
+            bananasContainer.appendChild(bananaEl);
+          });
+        }
 
         topRow.appendChild(card);
       }
