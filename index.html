@@ -135,12 +135,32 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const bananaTypes = {
-      common: { name: "Common", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴",🌴],
-      big: { name: "Big", growTime: 7000, basePrice: 8, growthStages: ["🌱", "🪴",🌴], 
-      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15, growthStages: ["🌱", "🪴",🌴]
-    };
-
+const bananaTypes = {
+  common: { 
+    name: "Normal", 
+    growTime: 4000, 
+    basePrice: 5, 
+    growthStages: ["🌱", "🪴", "🌴"] 
+  },
+  big: { 
+    name: "Big", 
+    growTime: 7000, 
+    basePrice: 10, 
+    growthStages: ["🌱", "🪴", "🌴"] 
+  },
+  rainbow: { 
+    name: "Rainbow", 
+    growTime: 10000, 
+    basePrice: 25, 
+    growthStages: ["🌱", "🪴", "🌴"] 
+  },
+mythical: { 
+    name: "Mythical", 
+    growTime: 20000, 
+    basePrice: 50, 
+    growthStages: ["🌱", "🪴", "🌴"] 
+  }
+};
     let userDocRef, userData;
 
     document.getElementById('login').onclick = () => {
@@ -161,9 +181,9 @@
           userData = docSnap.data();
         } else {
           userData = {
-            cash: 100,
+            cash: 10,
             inventory: {
-              common: 0,
+              normal: 0,
               big: 0,
               rainbow: 0,
               mythical: 0
