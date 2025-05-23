@@ -180,27 +180,54 @@
     }
 
     async function sellBananaWithAnimation(buttonEl, treeEl, type) {
-      buttonEl.disabled = true;
+  buttonEl.disabled = true;
 
-      const bananaIcon = document.createElement("div");
-      bananaIcon.className = "fly-banana";
-      bananaIcon.textContent = "🍌";
-      treeEl.appendChild(bananaIcon);
+  const cashCounter = document.getElementById("cash");
+  const cashRect = cashCounter.getBoundingClientRect();
+  const treeRect = treeEl.getBoundingClientRect();
 
-      const cashCounter = document.getElementById("cash");
+  const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
+  userData.cash += sellPrice;
+  await updateDoc(userDocRef, { cash: userData.cash });
 
-      const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
-      userData.cash += sellPrice;
+  // Create 10 bananas flying to money
+  for (let i = 0; i < 10; i++) {
+    const bananaIcon = document.createElement("div");
+    bananaIcon.className = "fly-banana";
+    bananaIcon.textContent = "🍌";
 
-      await updateDoc(userDocRef, {
-        cash: userData.cash
-      });
+    // Position banana at tree button position with some random offset for fun
+    bananaIcon.style.position = "fixed";
+    bananaIcon.style.left = (treeRect.left + treeRect.width / 2 + (Math.random() * 30 - 15)) + "px";
+    bananaIcon.style.top = (treeRect.top + treeRect.height / 2 + (Math.random() * 30 - 15)) + "px";
+    bananaIcon.style.fontSize = "24px";
+    bananaIcon.style.zIndex = 1000;
 
-      setTimeout(() => {
-        treeEl.remove();
-        render();
-      }, 1000);
-    }
+    document.body.appendChild(bananaIcon);
+
+    // Animate banana flying to cash counter
+    const targetX = cashRect.left + cashRect.width / 2;
+    const targetY = cashRect.top + cashRect.height / 2;
+
+    bananaIcon.animate([
+      { transform: "translate(0, 0)", opacity: 1 },
+      { transform: `translate(${targetX - (treeRect.left + treeRect.width / 2)}px, ${targetY - (treeRect.top + treeRect.height / 2)}px) scale(0.5)`, opacity: 0 }
+    ], {
+      duration: 1000,
+      easing: "ease-in-out",
+      delay: i * 100
+    }).onfinish = () => {
+      bananaIcon.remove();
+    };
+  }
+
+  // Wait a bit for animation then remove tree
+  setTimeout(() => {
+    treeEl.remove();
+    render();
+  }, 1200);
+}
+
 
     async function plantSeed(type) {
       if (userData.inventory[type] <= 0) return;
