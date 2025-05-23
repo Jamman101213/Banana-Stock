@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Ba Boomer</title>
+  <title>Banana Grower with Growth Animation</title>
   <style>
     body {
       background: #fefae0;
@@ -65,6 +65,8 @@
       transition: all 0.3s ease-in-out;
       font-weight: bold;
       color: #00796b;
+      font-size: 2em;
+      user-select: none;
     }
 
     .banana-tree button {
@@ -76,6 +78,8 @@
       cursor: pointer;
       font-weight: bold;
       transition: background 0.3s ease;
+      font-size: 0.6em;
+      user-select: none;
     }
 
     .banana-tree button:hover {
@@ -132,10 +136,10 @@
     const db = getFirestore(app);
 
     const bananaTypes = {
-      common: { name: "Common", growTime: 4000, basePrice: 5 },
-      big: { name: "Big", growTime: 7000, basePrice: 8 },
-      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15 },
-      mythical: { name: "Mythical", growTime: 20000, basePrice: 30 }
+      common: { name: "Common", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🌿", "🌳"] },
+      big: { name: "Big", growTime: 7000, basePrice: 8, growthStages: ["🌱", "🌴", "🌳"] },
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15, growthStages: ["🌱", "🌿", "🌳🌈"] },
+      mythical: { name: "Mythical", growTime: 20000, basePrice: 30, growthStages: ["🌱", "🌴", "🌳✨"] }
     };
 
     let userDocRef, userData;
@@ -193,33 +197,31 @@
       const cashRect = cashCounter.getBoundingClientRect();
       const treeRect = treeEl.getBoundingClientRect();
 
-      const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
-      userData.cash += sellPrice;
+      // Earn profit for each banana
+      const profit = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
+      userData.cash += profit;
       await updateDoc(userDocRef, { cash: userData.cash });
       render(); // update cash display immediately
 
-      // Center points of tree and cash elements
+      // Calculate center positions
       const startX = treeRect.left + treeRect.width / 2;
       const startY = treeRect.top + treeRect.height / 2;
       const endX = cashRect.left + cashRect.width / 2;
       const endY = cashRect.top + cashRect.height / 2;
 
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 10; i++) {
         const bananaIcon = document.createElement("div");
         bananaIcon.className = "fly-banana";
         bananaIcon.textContent = "🍌";
 
-        // Start at center of tree + a small random offset so bananas don’t overlap perfectly
         bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
         bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
 
         document.body.appendChild(bananaIcon);
 
-        // Calculate translation distances
         const deltaX = endX - parseFloat(bananaIcon.style.left);
         const deltaY = endY - parseFloat(bananaIcon.style.top);
 
-        // Animate banana flying to cash counter
         bananaIcon.animate([
           { transform: "translate(0, 0)", opacity: 1 },
           { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.5)`, opacity: 0 }
@@ -232,7 +234,7 @@
         };
       }
 
-      // Remove the entire tree container (including button) after animation
+      // Remove tree container after animation
       setTimeout(() => {
         treeEl.remove();
         render();
@@ -247,19 +249,31 @@
       });
       render();
 
-      const growTime = bananaTypes[type].growTime;
+      const growthStages = bananaTypes[type].growthStages;
+      const totalGrowTime = bananaTypes[type].growTime;
+      const stageTime = totalGrowTime / growthStages.length;
+
       const tree = document.createElement("div");
       tree.className = "banana-tree";
-      tree.textContent = `🌱 Growing a ${bananaTypes[type].name} Banana Tree...`;
+      tree.textContent = growthStages[0]; // start with first stage
       document.getElementById("trees").appendChild(tree);
 
-      setTimeout(() => {
-        tree.textContent = `🌳 ${bananaTypes[type].name} Banana Tree is ready! `;
-        const btn = document.createElement("button");
-        btn.textContent = `Sell ${bananaTypes[type].name} Banana`;
-        btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
-        tree.appendChild(btn);
-      }, growTime);
+      let currentStage = 0;
+
+      const growInterval = setInterval(() => {
+        currentStage++;
+        if (currentStage < growthStages.length) {
+          tree.textContent = growthStages[currentStage];
+        } else {
+          clearInterval(growInterval);
+          tree.textContent = `${growthStages[growthStages.length - 1]} ${bananaTypes[type].name} Banana Tree is ready! `;
+
+          const btn = document.createElement("button");
+          btn.textContent = `Sell ${bananaTypes[type].name} Bananas`;
+          btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
+          tree.appendChild(btn);
+        }
+      }, stageTime);
     }
 
     function render() {
