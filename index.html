@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Banana Grower Game</title>
+  <title>Banana Boomer</title>
   <style>
     body {
       background: #fefae0;
@@ -129,7 +129,8 @@
     const bananaTypes = {
       common: { name: "Common", growTime: 4000, basePrice: 5 },
       big: { name: "Big", growTime: 7000, basePrice: 8 },
-      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15 }
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15 },
+      Mythical: { name: "Mythical", growTime: 20000, basePrice: 30 }
     };
 
     let userDocRef, userData;
@@ -190,28 +191,35 @@
   userData.cash += sellPrice;
   await updateDoc(userDocRef, { cash: userData.cash });
 
-  // Create 10 bananas flying to money
+  // Center points of tree and cash elements
+  const startX = treeRect.left + treeRect.width / 2;
+  const startY = treeRect.top + treeRect.height / 2;
+  const endX = cashRect.left + cashRect.width / 2;
+  const endY = cashRect.top + cashRect.height / 2;
+
   for (let i = 0; i < 10; i++) {
     const bananaIcon = document.createElement("div");
     bananaIcon.className = "fly-banana";
     bananaIcon.textContent = "🍌";
 
-    // Position banana at tree button position with some random offset for fun
+    // Start at center of tree + a small random offset so bananas don’t overlap perfectly
     bananaIcon.style.position = "fixed";
-    bananaIcon.style.left = (treeRect.left + treeRect.width / 2 + (Math.random() * 30 - 15)) + "px";
-    bananaIcon.style.top = (treeRect.top + treeRect.height / 2 + (Math.random() * 30 - 15)) + "px";
+    bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
+    bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
     bananaIcon.style.fontSize = "24px";
     bananaIcon.style.zIndex = 1000;
+    bananaIcon.style.pointerEvents = "none";
 
     document.body.appendChild(bananaIcon);
 
-    // Animate banana flying to cash counter
-    const targetX = cashRect.left + cashRect.width / 2;
-    const targetY = cashRect.top + cashRect.height / 2;
+    // Calculate translation distances
+    const deltaX = endX - parseFloat(bananaIcon.style.left);
+    const deltaY = endY - parseFloat(bananaIcon.style.top);
 
+    // Animate banana flying to cash counter
     bananaIcon.animate([
       { transform: "translate(0, 0)", opacity: 1 },
-      { transform: `translate(${targetX - (treeRect.left + treeRect.width / 2)}px, ${targetY - (treeRect.top + treeRect.height / 2)}px) scale(0.5)`, opacity: 0 }
+      { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.5)`, opacity: 0 }
     ], {
       duration: 1000,
       easing: "ease-in-out",
@@ -225,10 +233,8 @@
   setTimeout(() => {
     treeEl.remove();
     render();
-  }, 1200);
+  }, 1300);
 }
-
-
     async function plantSeed(type) {
       if (userData.inventory[type] <= 0) return;
       userData.inventory[type]--;
