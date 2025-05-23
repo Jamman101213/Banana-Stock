@@ -195,10 +195,19 @@
     let userDocRef, userData;
     let stockData = {};
 
-    document.getElementById('login').onclick = () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider);
-    };
+    document.getElementById('login').addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    console.log("Signed in user:", user.displayName, user.email);
+    document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+  } catch (error) {
+    console.error("Sign-in error:", error);
+  }
+});
 
     onAuthStateChanged(auth, async user => {
       if (user) {
