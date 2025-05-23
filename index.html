@@ -171,6 +171,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 
     const bananaTypes = {
       normal: { name: "Normal", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴", "🌴"] },
@@ -231,6 +233,13 @@
 
       showLoadingScreen(true);
       await loadUserData(user);
+onSnapshot(stockDocRef, (docSnap) => {
+  if (docSnap.exists()) {
+    globalStock = docSnap.data();
+    render(); // Automatically re-render the seed cards when stock updates
+  }
+});
+
       document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
       document.getElementById('auth').style.display = 'none';
       document.getElementById('game').style.display = 'block';
