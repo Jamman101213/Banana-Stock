@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Banana Grower with Stock</title>
   <style>
     body {
@@ -10,6 +10,23 @@
       text-align: center;
       margin: 0;
       padding: 20px;
+    }
+
+    /* Loading screen styles */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fefae0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      font-weight: bold;
+      color: #665c00;
+      z-index: 9999;
     }
 
     h1 {
@@ -105,7 +122,11 @@
   </style>
 </head>
 <body>
+  <!-- Loading screen -->
+  <div id="loading-screen">Loading...</div>
+
   <h1>🍌 Banana Grower</h1>
+
   <div id="auth" style="display: none;">
     <button id="login">Sign in with Google</button>
   </div>
@@ -145,18 +166,18 @@
     let userDocRef, userData, globalStock = {};
     const stockDocRef = doc(db, "bananaStock", "current");
 
+    // Show login button if user not logged in
     document.getElementById('login').onclick = () => {
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider);
     };
 
-    onAuthStateChanged(auth, async user => {
-      if (!user) return;
+    function showLoadingScreen(show) {
+      const loading = document.getElementById('loading-screen');
+      loading.style.display = show ? 'flex' : 'none';
+    }
 
-      document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('game').style.display = 'block';
-
+    async function loadUserData(user) {
       userDocRef = doc(db, "bananaUsers", user.uid);
       const docSnap = await getDoc(userDocRef);
 
@@ -182,8 +203,28 @@
         rainbow: 0,
         mythical: 0
       };
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        showLoadingScreen(false);
+        document.getElementById('auth').style.display = 'block';
+        document.getElementById('game').style.display = 'none';
+        return;
+      }
+
+      showLoadingScreen(true);
+      await loadUserData(user);
+      document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
 
       render();
+
+      // Hide loading screen after 3 seconds
+      setTimeout(() => {
+        showLoadingScreen(false);
+      }, 3000);
     });
 
     async function buySeed(type) {
