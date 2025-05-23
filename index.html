@@ -67,11 +67,6 @@
       color: #00796b;
       font-size: 2em;
       user-select: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
     }
 
     .banana-tree button {
@@ -140,225 +135,169 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Store growth stages as strings: emojis or base64 image data URLs
     const bananaTypes = {
-      common: { 
-        name: "Common", 
-        growTime: 4000, 
-        basePrice: 5, 
-        growthStages: [
-          "🌱", 
-          "🌿", 
-          // banana tree image base64 string as data URL
-          "data:image/png;base64,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"
-        ],
-        harvestPrice: 50,
-        growthAnimationDuration: 2000
-      },
-      rare: {
-        name: "Rare",
-        growTime: 7000,
-        basePrice: 20,
-        growthStages: [
-          "🌱", 
-          "🌿", 
-          "🌳"
-        ],
-        harvestPrice: 200,
-        growthAnimationDuration: 3000
-      }
+      common: { name: "Common", growTime: 4000, basePrice: 5, growthStages: ["🌱", "🪴",🌴],
+      big: { name: "Big", growTime: 7000, basePrice: 8, growthStages: ["🌱", "🪴",🌴], 
+      rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15, growthStages: ["🌱", "🪴",🌴]
     };
 
-    let cash = 0;
-    const cashElement = document.getElementById('cash');
-    const topRow = document.getElementById('top-row');
-    const treesDiv = document.getElementById('trees');
-    const authDiv = document.getElementById('auth');
-    const gameDiv = document.getElementById('game');
-    const loginBtn = document.getElementById('login');
-    const userInfo = document.getElementById('user-info');
+    let userDocRef, userData;
 
-    // Google login handler
-    loginBtn.addEventListener('click', () => {
+    document.getElementById('login').onclick = () => {
       const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch(console.error);
-    });
-
-    let currentUser;
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        authDiv.style.display = 'none';
-        gameDiv.style.display = 'block';
-        userInfo.textContent = `Welcome, ${user.displayName}`;
-        await loadUserData();
-        renderSeeds();
-        renderTrees();
-        updateCashDisplay();
-      } else {
-        authDiv.style.display = 'block';
-        gameDiv.style.display = 'none';
-      }
-    });
-
-    // User data from Firestore
-    let userData = {
-      cash: 0,
-      seeds: {
-        common: 1,
-        rare: 0
-      },
-      trees: [] // array of {type, plantedAt, stage}
+      signInWithPopup(auth, provider);
     };
 
-    async function loadUserData() {
-      const docRef = doc(db, "bananaGrowerUsers", currentUser.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        userData = docSnap.data();
-      } else {
-        await setDoc(docRef, userData);
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        document.getElementById('user-info').textContent = `Welcome, ${user.displayName}`;
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+
+        userDocRef = doc(db, "bananaUsers", user.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        if (docSnap.exists()) {
+          userData = docSnap.data();
+        } else {
+          userData = {
+            cash: 100,
+            inventory: {
+              common: 0,
+              big: 0,
+              rainbow: 0,
+              mythical: 0
+            }
+          };
+          await setDoc(userDocRef, userData);
+        }
+
+        render();
       }
-      cash = userData.cash || 0;
+    });
+
+    async function buySeed(type) {
+      const cost = bananaTypes[type].basePrice;
+      if (userData.cash >= cost) {
+        userData.cash -= cost;
+        userData.inventory[type]++;
+        await updateDoc(userDocRef, {
+          cash: userData.cash,
+          inventory: userData.inventory
+        });
+        render();
+      }
     }
 
-    async function saveUserData() {
-      if (!currentUser) return;
-      const docRef = doc(db, "bananaGrowerUsers", currentUser.uid);
-      userData.cash = cash;
-      await setDoc(docRef, userData);
+    async function sellBananaWithAnimation(buttonEl, treeEl, type) {
+      buttonEl.disabled = true;
+
+      const cashCounter = document.getElementById("cash");
+      const cashRect = cashCounter.getBoundingClientRect();
+      const treeRect = treeEl.getBoundingClientRect();
+
+      // Earn profit for each banana
+      const profit = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
+      userData.cash += profit;
+      await updateDoc(userDocRef, { cash: userData.cash });
+      render(); // update cash display immediately
+
+      // Calculate center positions
+      const startX = treeRect.left + treeRect.width / 2;
+      const startY = treeRect.top + treeRect.height / 2;
+      const endX = cashRect.left + cashRect.width / 2;
+      const endY = cashRect.top + cashRect.height / 2;
+
+      for (let i = 0; i < 10; i++) {
+        const bananaIcon = document.createElement("div");
+        bananaIcon.className = "fly-banana";
+        bananaIcon.textContent = "🍌";
+
+        bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
+        bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
+
+        document.body.appendChild(bananaIcon);
+
+        const deltaX = endX - parseFloat(bananaIcon.style.left);
+        const deltaY = endY - parseFloat(bananaIcon.style.top);
+
+        bananaIcon.animate([
+          { transform: "translate(0, 0)", opacity: 1 },
+          { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.5)`, opacity: 0 }
+        ], {
+          duration: 1000,
+          easing: "ease-in-out",
+          delay: i * 100
+        }).onfinish = () => {
+          bananaIcon.remove();
+        };
+      }
+
+      // Remove tree container after animation
+      setTimeout(() => {
+        treeEl.remove();
+        render();
+      }, 1500);
     }
 
-    function updateCashDisplay() {
-      cashElement.textContent = cash;
+    async function plantSeed(type) {
+      if (userData.inventory[type] <= 0) return;
+      userData.inventory[type]--;
+      await updateDoc(userDocRef, {
+        inventory: userData.inventory
+      });
+      render();
+
+      const growthStages = bananaTypes[type].growthStages;
+      const totalGrowTime = bananaTypes[type].growTime;
+      const stageTime = totalGrowTime / growthStages.length;
+
+      const tree = document.createElement("div");
+      tree.className = "banana-tree";
+      tree.textContent = growthStages[0]; // start with first stage
+      document.getElementById("trees").appendChild(tree);
+
+      let currentStage = 0;
+
+      const growInterval = setInterval(() => {
+        currentStage++;
+        if (currentStage < growthStages.length) {
+          tree.textContent = growthStages[currentStage];
+        } else {
+          clearInterval(growInterval);
+          tree.textContent = `${growthStages[growthStages.length - 1]} ${bananaTypes[type].name} Banana Tree is ready! `;
+
+          const btn = document.createElement("button");
+          btn.textContent = `Sell ${bananaTypes[type].name} Bananas`;
+          btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
+          tree.appendChild(btn);
+        }
+      }, stageTime);
     }
 
-    function renderSeeds() {
+    function render() {
+      document.getElementById('cash').textContent = userData.cash;
+
+      const topRow = document.getElementById('top-row');
       topRow.innerHTML = '';
-      Object.keys(userData.seeds).forEach(type => {
-        const count = userData.seeds[type];
-        const seedInfo = bananaTypes[type];
-        const card = document.createElement('div');
-        card.className = 'seed-card';
 
-        card.innerHTML = `
-          <h3>${seedInfo.name} Seeds</h3>
-          <p>Count: ${count}</p>
-          <button id="buy-${type}">Buy ($${seedInfo.basePrice})</button>
-          <button id="plant-${type}" ${count === 0 ? 'disabled' : ''}>Plant</button>
+      for (const type in bananaTypes) {
+        const b = bananaTypes[type];
+        const count = userData.inventory[type] || 0;
+        topRow.innerHTML += `
+          <div class="seed-card">
+            <h3>${b.name}</h3>
+            <p>Seeds: ${count}</p>
+            <p>Buy: $${b.basePrice}</p>
+            <button onclick="buySeed('${type}')">Buy</button>
+            <button onclick="plantSeed('${type}')">Plant</button>
+          </div>
         `;
-        topRow.appendChild(card);
-
-        card.querySelector(`#buy-${type}`).addEventListener('click', () => {
-          if (cash >= seedInfo.basePrice) {
-            cash -= seedInfo.basePrice;
-            userData.seeds[type]++;
-            updateCashDisplay();
-            saveUserData();
-            renderSeeds();
-          } else {
-            alert('Not enough money to buy seed!');
-          }
-        });
-
-        card.querySelector(`#plant-${type}`).addEventListener('click', () => {
-          if (userData.seeds[type] > 0) {
-            userData.seeds[type]--;
-            plantTree(type);
-            renderSeeds();
-            saveUserData();
-          }
-        });
-      });
-    }
-
-    function plantTree(type) {
-      const newTree = {
-        type,
-        plantedAt: Date.now(),
-        stage: 0
-      };
-      userData.trees.push(newTree);
-      renderTrees();
-      saveUserData();
-    }
-
-    function renderTrees() {
-      treesDiv.innerHTML = '';
-      userData.trees.forEach((tree, idx) => {
-        const treeInfo = bananaTypes[tree.type];
-        const div = document.createElement('div');
-        div.className = 'banana-tree';
-
-        // Determine current growth stage based on elapsed time
-        const elapsed = Date.now() - tree.plantedAt;
-        const totalGrowTime = treeInfo.growTime;
-        const stageCount = treeInfo.growthStages.length;
-
-        // Calculate stage index (0 to stageCount-1)
-        let currentStageIndex = Math.min(stageCount - 1, Math.floor(elapsed / (totalGrowTime / stageCount)));
-
-        // Update stage in userData for save
-        userData.trees[idx].stage = currentStageIndex;
-
-        // Get stage image or emoji string
-        const stageContent = treeInfo.growthStages[currentStageIndex];
-
-        // Create image or emoji
-        let stageElement;
-        if (stageContent.startsWith('data:image')) {
-          stageElement = document.createElement('img');
-          stageElement.src = stageContent;
-          stageElement.style.width = '120px';
-          stageElement.style.height = 'auto';
-          stageElement.style.userSelect = 'none';
-        } else {
-          stageElement = document.createElement('div');
-          stageElement.textContent = stageContent;
-          stageElement.style.fontSize = '3em';
-          stageElement.style.userSelect = 'none';
-        }
-
-        div.appendChild(stageElement);
-
-        // Show harvest button only if fully grown
-        if (currentStageIndex === stageCount - 1) {
-          const btn = document.createElement('button');
-          btn.textContent = `Harvest $${treeInfo.harvestPrice}`;
-          btn.addEventListener('click', () => harvestTree(idx));
-          div.appendChild(btn);
-        } else {
-          const timeLeft = Math.max(0, totalGrowTime - elapsed);
-          const secLeft = Math.ceil(timeLeft / 1000);
-          const info = document.createElement('div');
-          info.textContent = `Growing... (${secLeft}s left)`;
-          info.style.fontSize = '0.8em';
-          info.style.color = '#555';
-          div.appendChild(info);
-        }
-
-        treesDiv.appendChild(div);
-      });
-      saveUserData();
-    }
-
-    function harvestTree(idx) {
-      const tree = userData.trees[idx];
-      const treeInfo = bananaTypes[tree.type];
-      cash += treeInfo.harvestPrice;
-      userData.trees.splice(idx, 1);
-      updateCashDisplay();
-      renderTrees();
-      saveUserData();
-    }
-
-    // Periodically update growth stages every second
-    setInterval(() => {
-      if (currentUser) {
-        renderTrees();
       }
-    }, 1000);
+    }
+
+    window.buySeed = buySeed;
+    window.plantSeed = plantSeed;
   </script>
 </body>
 </html>
