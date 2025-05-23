@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banana Stock</title>
+    <title>Banana Game</title>
     <style>
         * {
             margin: 0;
@@ -24,13 +24,12 @@
 
         .container {
             text-align: center;
-            max-width: 600px;
-            padding: 40px;
+            max-width: 450px;
+            padding: 30px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            margin-bottom: 40px;
         }
 
         .banana-icon {
@@ -115,27 +114,17 @@
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="banana-icon">🍌</div>
+        <h1>Banana Game</h1>
+        <p class="subtitle">The most a-peel-ing game you'll ever play!</p>
         
         <p class="description">
-            Welcome to Banana Stock, the ultimate banana growing game!
+           We wont spoil the suprize just click log in and leanr more!
         </p>
-
-        <ul class="features">
-            <li>Grow bananas</li>
-            <li>Make money</li>
-            <li>Cool animations</li>
-            
-        </ul>
-
-        <p class="description">
-            Are you ready to go bananas and become the ultimate banana grower? 
-            Join us players already having a blast!
-        </p>
-
-        <p class="footer-text">Ready to start your banana adventure?</p>
+        
+        <button class="login-btn" id="login-btn">🍌 Start Playing - Log In</button>
     </div>
-
-    <button class="login-btn" id="login-btn">🍌 Start Playing - Log In/create account</button>
 
     <script>
         document.getElementById('login-btn').addEventListener('click', function() {
