@@ -39,13 +39,15 @@
     }
 
     .seed-card button {
-      margin: 5px;
+      margin: 5px 5px 0 5px;
       padding: 5px 10px;
       border: none;
       background: #ffd54f;
       color: #5d4037;
       border-radius: 5px;
       cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
     }
 
     .seed-card button:hover {
@@ -61,6 +63,8 @@
       width: 300px;
       position: relative;
       transition: all 0.3s ease-in-out;
+      font-weight: bold;
+      color: #00796b;
     }
 
     .banana-tree button {
@@ -70,6 +74,8 @@
       padding: 8px 15px;
       border-radius: 5px;
       cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
     }
 
     .banana-tree button:hover {
@@ -78,20 +84,19 @@
 
     #cash {
       font-weight: bold;
-      font-size: 1.5em;
+      font-size: 1.8em;
       color: green;
+      display: inline-block;
+      position: relative;
+      min-width: 50px;
     }
 
     .fly-banana {
-      position: absolute;
+      position: fixed;
       font-size: 2em;
-      z-index: 10;
-      animation: flyToMoney 1s forwards;
-    }
-
-    @keyframes flyToMoney {
-      0% { transform: translate(0, 0); opacity: 1; }
-      100% { transform: translate(300px, -80px) scale(0.5); opacity: 0; }
+      z-index: 1000;
+      pointer-events: none;
+      user-select: none;
     }
   </style>
 </head>
@@ -130,7 +135,7 @@
       common: { name: "Common", growTime: 4000, basePrice: 5 },
       big: { name: "Big", growTime: 7000, basePrice: 8 },
       rainbow: { name: "Rainbow", growTime: 10000, basePrice: 15 },
-      Mythical: { name: "Mythical", growTime: 20000, basePrice: 30 }
+      mythical: { name: "Mythical", growTime: 20000, basePrice: 30 }
     };
 
     let userDocRef, userData;
@@ -157,7 +162,8 @@
             inventory: {
               common: 0,
               big: 0,
-              rainbow: 0
+              rainbow: 0,
+              mythical: 0
             }
           };
           await setDoc(userDocRef, userData);
@@ -181,60 +187,58 @@
     }
 
     async function sellBananaWithAnimation(buttonEl, treeEl, type) {
-  buttonEl.disabled = true;
+      buttonEl.disabled = true;
 
-  const cashCounter = document.getElementById("cash");
-  const cashRect = cashCounter.getBoundingClientRect();
-  const treeRect = treeEl.getBoundingClientRect();
+      const cashCounter = document.getElementById("cash");
+      const cashRect = cashCounter.getBoundingClientRect();
+      const treeRect = treeEl.getBoundingClientRect();
 
-  const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
-  userData.cash += sellPrice;
-  await updateDoc(userDocRef, { cash: userData.cash });
+      const sellPrice = bananaTypes[type].basePrice + Math.floor(Math.random() * 3);
+      userData.cash += sellPrice;
+      await updateDoc(userDocRef, { cash: userData.cash });
+      render(); // update cash display immediately
 
-  // Center points of tree and cash elements
-  const startX = treeRect.left + treeRect.width / 2;
-  const startY = treeRect.top + treeRect.height / 2;
-  const endX = cashRect.left + cashRect.width / 2;
-  const endY = cashRect.top + cashRect.height / 2;
+      // Center points of tree and cash elements
+      const startX = treeRect.left + treeRect.width / 2;
+      const startY = treeRect.top + treeRect.height / 2;
+      const endX = cashRect.left + cashRect.width / 2;
+      const endY = cashRect.top + cashRect.height / 2;
 
-  for (let i = 0; i < 10; i++) {
-    const bananaIcon = document.createElement("div");
-    bananaIcon.className = "fly-banana";
-    bananaIcon.textContent = "🍌";
+      for (let i = 0; i < 10; i++) {
+        const bananaIcon = document.createElement("div");
+        bananaIcon.className = "fly-banana";
+        bananaIcon.textContent = "🍌";
 
-    // Start at center of tree + a small random offset so bananas don’t overlap perfectly
-    bananaIcon.style.position = "fixed";
-    bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
-    bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
-    bananaIcon.style.fontSize = "24px";
-    bananaIcon.style.zIndex = 1000;
-    bananaIcon.style.pointerEvents = "none";
+        // Start at center of tree + a small random offset so bananas don’t overlap perfectly
+        bananaIcon.style.left = startX + (Math.random() * 30 - 15) + "px";
+        bananaIcon.style.top = startY + (Math.random() * 30 - 15) + "px";
 
-    document.body.appendChild(bananaIcon);
+        document.body.appendChild(bananaIcon);
 
-    // Calculate translation distances
-    const deltaX = endX - parseFloat(bananaIcon.style.left);
-    const deltaY = endY - parseFloat(bananaIcon.style.top);
+        // Calculate translation distances
+        const deltaX = endX - parseFloat(bananaIcon.style.left);
+        const deltaY = endY - parseFloat(bananaIcon.style.top);
 
-    // Animate banana flying to cash counter
-    bananaIcon.animate([
-      { transform: "translate(0, 0)", opacity: 1 },
-      { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.5)`, opacity: 0 }
-    ], {
-      duration: 1000,
-      easing: "ease-in-out",
-      delay: i * 100
-    }).onfinish = () => {
-      bananaIcon.remove();
-    };
-  }
+        // Animate banana flying to cash counter
+        bananaIcon.animate([
+          { transform: "translate(0, 0)", opacity: 1 },
+          { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.5)`, opacity: 0 }
+        ], {
+          duration: 1000,
+          easing: "ease-in-out",
+          delay: i * 100
+        }).onfinish = () => {
+          bananaIcon.remove();
+        };
+      }
 
-  // Wait a bit for animation then remove tree
-  setTimeout(() => {
-    treeEl.remove();
-    render();
-  }, 1300);
-}
+      // Remove the entire tree container (including button) after animation
+      setTimeout(() => {
+        treeEl.remove();
+        render();
+      }, 1500);
+    }
+
     async function plantSeed(type) {
       if (userData.inventory[type] <= 0) return;
       userData.inventory[type]--;
@@ -246,11 +250,11 @@
       const growTime = bananaTypes[type].growTime;
       const tree = document.createElement("div");
       tree.className = "banana-tree";
-      tree.innerHTML = `🌱 Growing a ${bananaTypes[type].name} Banana Tree...`;
+      tree.textContent = `🌱 Growing a ${bananaTypes[type].name} Banana Tree...`;
       document.getElementById("trees").appendChild(tree);
 
       setTimeout(() => {
-        tree.innerHTML = `🌳 ${bananaTypes[type].name} Banana Tree is ready! `;
+        tree.textContent = `🌳 ${bananaTypes[type].name} Banana Tree is ready! `;
         const btn = document.createElement("button");
         btn.textContent = `Sell ${bananaTypes[type].name} Banana`;
         btn.onclick = () => sellBananaWithAnimation(btn, tree, type);
@@ -266,7 +270,7 @@
 
       for (const type in bananaTypes) {
         const b = bananaTypes[type];
-        const count = userData.inventory[type];
+        const count = userData.inventory[type] || 0;
         topRow.innerHTML += `
           <div class="seed-card">
             <h3>${b.name}</h3>
