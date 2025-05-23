@@ -333,7 +333,7 @@
     document.getElementById('logout-btn').onclick = async () => {
       if (confirm('Are you sure you want to logout?')) {
         await signOut(auth);
-        window.location.href = 'index.html';
+        window.location.href = 'log-in';
       }
     };
 
@@ -344,7 +344,7 @@
           await deleteDoc(userDocRef);
           alert("Your data was deleted. You'll be redirected to the login page.");
           await signOut(auth);
-          window.location.href = 'index.html';
+          window.location.href = 'log-in';
         } catch (e) {
           alert("Error deleting data: " + e.message);
         }
